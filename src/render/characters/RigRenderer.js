@@ -1,5 +1,6 @@
 import {NODES, RIG_PRESETS, RIG_IDS, newCharacter, readRigProject,
   characterIdForActor, sampleCharacter, findClip, visibleRigNodes, rigNodeDefinition, boundedRigValue} from '../../data/Rig2D.js';
+import {actorWalkDirection,resolveWalkAction} from '../../data/WalkGuide.js';
 
 const TAU=Math.PI*2,DEG=Math.PI/180;
 const project=readRigProject();
@@ -211,12 +212,14 @@ export function drawRigActor(c,actor,x,y,time=0,options={}){
       :action==='hit'&&actor?.hit>0
         ?(1-clamp(actor.hit/.12,0,1))*findClip(character,'hit').duration
         :time+(actor?.id?actor.id*.09:0));
-  const pose=options.pose||sampleCharacter(character,action,phase);
+  // Directional clips are opt-in: if walk.front/back/left/right does not
+  // exist, the original shared "walk" clip remains unchanged.
+  const face=options.face||actorWalkDirection(actor);
+  const clipAction=resolveWalkAction(character,action,face);
+  const pose=options.pose||sampleCharacter(character,clipAction,phase);
   const joints=getRigHandles(pose,character);
   const visible=new Set(visibleRigNodes(character));
   const speed=Math.hypot(actor?.vx||0,actor?.vy||0);
-  const face=options.face||(
-    (actor?.vy||0)<-Math.abs(actor?.vx||0)*.6?'back':'front');
   const flipped=face==='left'||(face!=='right'&&(actor?.vx||0)<-8);
   const scale=(options.scale??1)*(shape==='colossus'?1.65:1);
   c.save();c.translate(x,y);c.scale(flipped?-scale:scale,scale);

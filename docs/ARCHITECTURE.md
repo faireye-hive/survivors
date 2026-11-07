@@ -77,3 +77,19 @@ e mover partes com mobilidade definida. `rigOffsetRange` e
 `boundedRigValue` limitam deslocamentos na interface, no desenho
 e na validação de JSON; articulações rígidas têm deslocamento zero
 e permitem rotação. Os descendentes seguem a transformação do pai.
+
+## Guia de caminhada de quatro direções
+
+`src/data/WalkGuide.js` gera poses procedurais de contato/passagem
+para frente, trás, esquerda e direita. `src/studio/WalkReference.js`
+desenha o esqueleto diretamente no Canvas usando os mesmos pivôs
+de `getRigHandles`. O painel contém 16 miniaturas sem imagens externas,
+sobreposição opcional, opacidade e seleção do quadro.
+
+`createDirectionalWalkClip` cria `walk.front`, `walk.back`, `walk.left`
+ou `walk.right` com quatro poses e um quadro de fechamento no tempo
+final. `resolveWalkAction` faz fallback para a animação antiga `walk`
+quando um clipe direcional não existe. `actorWalkDirection` seleciona a
+direção a partir da velocidade ou orientação anterior; ambos são
+usados no renderizador do jogo. Criar um clipe no editor exige ação
+explícita e confirmação antes de substituir outro do mesmo ID.

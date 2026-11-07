@@ -1,5 +1,8 @@
 import { World } from '../world/World.js';
 import {drawRigActor, getRigHandles} from '../render/characters/RigRenderer.js';
+import {drawWalkReference} from './WalkReference.js';
+import {WALK_DIRECTIONS,WALK_LABELS,WALK_FRAME_LABELS,WALK_FRAME_NOTES,
+  walkGuideClipId,createDirectionalWalkClip,isWalkRig} from '../data/WalkGuide.js';
 import {NODES,RIG_IDS,RIG_PRESETS,RIG_SCHEMA,RIG_VERSION,createFrame,findClip,newCharacter,
   newRigProject,readRigProject,sampleCharacter,storeRigProject,validateRigProject,
   visibleRigNodes,rigOffsetRange,boundedRigValue,rigNodeDefinition,rigShape} from '../data/Rig2D.js';
@@ -10,7 +13,8 @@ if(!ctx)throw Error('Canvas 2D indisponível');
 const world=new World(173);
 let project=readRigProject();
 const state={characterId:project.characters[0].id,clipId:'idle',selected:'head',time:0,
-  playing:true,background:'dark',face:'front',zoom:2.6,handles:true,tool:'rotate'};
+  playing:true,background:'dark',face:'front',zoom:2.6,handles:true,tool:'rotate',
+  referenceFrame:0,referenceOverlay:true,referenceOpacity:.55};
 let width=1,height=1,dpr=1,last=0,dragging=null,refreshAt=0;
 const paletteNames={primary:'Principal',secondary:'Secundária',accent:'Detalhes',
   skin:'Pele/rosto',outline:'Contorno',eyes:'Olhos',metal:'Metal'};
@@ -137,14 +141,95 @@ function refreshTimeline(){
     character:character().id,clip:clip().id,time:round(state.time),
     pose:currentPose()},null,2);
 }
+function renderReferenceGrid(){
+  const grid=$('reference-grid');
+  grid.replaceChildren();
+  for(const direction of WALK_DIRECTIONS){
+    const row=document.createElement('div');row.className='walk-ref-row';
+    const title=document.createElement('div');
+    title.className='walk-ref-label';
+    title.textContent=WALK_LABELS[direction];
+    const filmstrip=document.createElement('div');filmstrip.className='walk-ref-frames';
+    for(let frame=0;frame<4;frame++){
+      const button=document.createElement('button');
+      button.type='button';button.dataset.direction=direction;
+      button.dataset.frame=String(frame);
+      button.setAttribute('aria-label',WALK_LABELS[direction]+' — '+WALK_FRAME_LABELS[frame]);
+      button.title=WALK_FRAME_LABELS[frame]+': '+WALK_FRAME_NOTES[frame];
+      const thumbnail=document.createElement('canvas');
+      thumbnail.width=70;thumbnail.height=90;
+      thumbnail.setAttribute('aria-hidden','true');
+      const c=thumbnail.getContext('2d');
+      if(c){
+        c.fillStyle='#102832';c.fillRect(0,0,70,90);
+        drawWalkReference(c,direction,frame,35,83,1.1,1);
+      }
+      const number=document.createElement('small');
+      number.textContent=String(frame+1).padStart(2,'0');
+      button.append(thumbnail,number);
+      button.addEventListener('click',()=>selectReference(direction,frame));
+      filmstrip.append(button);
+    }
+    row.append(title,filmstrip);grid.append(row);
+  }
+}
+function refreshReferenceUI(){
+  const biped=isWalkRig(character());
+  $('reference-apply').disabled=!biped;
+  $('reference-overlay').disabled=!biped;
+  $('reference-caption').textContent=WALK_LABELS[state.face]+' · '+
+    WALK_FRAME_LABELS[state.referenceFrame]+': '+WALK_FRAME_NOTES[state.referenceFrame];
+  for(const button of $('reference-grid').querySelectorAll('button[data-direction]')){
+    const active=button.dataset.direction===state.face&&
+      Number(button.dataset.frame)===state.referenceFrame;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+  }
+  $('reference-help').textContent=biped
+    ?'Cria walk.'+state.face+' com 4 poses e 1 quadro de fechamento para loop suave. Outros clipes ficam intactos.'
+    :'Referência humana para observação. Esta espécie não tem quatro membros para aplicar a caminhada.';
+}
+function selectReference(direction,frame,activateClip=true){
+  if(!WALK_DIRECTIONS.includes(direction)||frame<0||frame>3)return;
+  state.face=direction;state.referenceFrame=frame;
+  $('direction').value=direction;
+  if(activateClip){
+    const desired=walkGuideClipId(direction);
+    const target=character().clips.some(c=>c.id===desired)?desired:
+      character().clips.some(c=>c.id==='walk')?'walk':null;
+    if(target){state.clipId=target;refreshClips();}
+    seek(clip().duration*frame/4);
+  }
+  refreshReferenceUI();
+}
+$('reference-overlay').addEventListener('change',event=>{
+  state.referenceOverlay=event.target.checked;
+});
+$('reference-opacity').addEventListener('input',event=>{
+  state.referenceOpacity=Number(event.target.value);
+  $('reference-opacity-label').textContent=Math.round(state.referenceOpacity*100)+'%';
+});
+$('reference-apply').addEventListener('click',()=>{
+  if(!isWalkRig(character()))return message('Este monstro não possui caminhada humanoide.',true);
+  const id=walkGuideClipId(state.face),existing=character().clips.findIndex(c=>c.id===id);
+  if(existing!==-1&&!confirm('Substituir '+id+'? As poses atuais deste clipe serão perdidas.'))return;
+  if(existing===-1&&character().clips.length>=16)
+    return message('Limite de 16 animações por personagem.',true);
+  const replacement=createDirectionalWalkClip(state.face);
+  if(existing===-1)character().clips.push(replacement);
+  else character().clips[existing]=replacement;
+  state.clipId=id;state.time=replacement.duration*state.referenceFrame/4;
+  pause();save();refreshAll();message('Criada '+id+' com 4 quadros + fechamento. Ajuste cada pose pelo editor.');
+});
 function refreshAll(){
   refreshCharacters();refreshClips();refreshParts();refreshColors();
-  refreshInspector();refreshTimeline();
+  refreshInspector();refreshTimeline();refreshReferenceUI();
 }
 function selectPart(id){state.selected=id;refreshParts();refreshInspector();}
 function seek(time){
   pause();state.time=clamp(round(time),0,clip().duration);
-  refreshInspector();refreshTimeline();
+  state.referenceFrame=Math.min(3,Math.floor(state.time/clip().duration*4));
+  refreshInspector();refreshTimeline();refreshReferenceUI();
 }
 function setPartValue(key,value){
   if(!Number.isFinite(value))return;
@@ -252,7 +337,8 @@ $('reset-pose').addEventListener('click',()=>{
   pause();try{const f=ensureFrame();f.pose={};save();refreshInspector();refreshTimeline();}
   catch(e){message(e.message,true);}
 });
-$('direction').addEventListener('change',event=>state.face=event.target.value);
+$('direction').addEventListener('change',event=>
+  selectReference(event.target.value,state.referenceFrame,false));
 $('background').addEventListener('change',event=>state.background=event.target.value);
 $('zoom').addEventListener('input',event=>{
   state.zoom=Number(event.target.value);$('zoom-label').textContent=state.zoom.toFixed(1)+'×';
@@ -285,6 +371,13 @@ function drawPose(c,w,h,t,zoom,handles=false){
     id:selected.id,character:selected,pose,face:state.face,
     shadow:!handles,showHandles:handles&&state.handles,selected:state.selected
   });
+  // The walk reference is an editor-only overlay. PNG exports remain clean.
+  if(handles&&state.referenceOverlay&&isWalkRig(selected)){
+    const frame=state.playing?Math.min(3,Math.floor(t/clip().duration%1*4)):
+      state.referenceFrame;
+    drawWalkReference(c,state.face,frame,0,0,
+      selected.template==='monster.colossus'?1.65:1,state.referenceOpacity);
+  }
   c.restore();
 }
 function resize(){
@@ -310,7 +403,11 @@ function paint(now){
     refreshAt=now;
     $('scrub').value=state.time;
     $('time-label').textContent=state.time.toFixed(2)+' / '+clip().duration.toFixed(2)+' s';
-    if(state.playing)refreshInspector();
+    if(state.playing){
+      refreshInspector();
+      state.referenceFrame=Math.min(3,Math.floor(state.time/clip().duration*4));
+      refreshReferenceUI();
+    }
   }
   requestAnimationFrame(paint);
 }
@@ -458,4 +555,4 @@ $('reset-project').addEventListener('click',()=>{
 });
 window.addEventListener('resize',resize);
 document.addEventListener('visibilitychange',()=>{last=0;});
-refreshAll();resize();requestAnimationFrame(paint);
+renderReferenceGrid();refreshAll();resize();requestAnimationFrame(paint);

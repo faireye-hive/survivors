@@ -77,3 +77,34 @@ as juntas de braços, mãos, pernas, pés e armas permanecem encaixadas.
 Se um JSON antigo possuir deslocamentos exagerados em juntas conectadas,
 esses valores são normalizados durante a importação/validação para evitar separações.
 O formato `rig2d` continua na versão 1 e mantém os mesmos IDs de peças.
+
+### Walk Reference · 4 frames × 4 directions
+
+O Rig Studio desenha **16 esqueletos-guia em Canvas 2D**, organizados em
+quatro direções (frente, costas, esquerda, direita) com quatro quadros em
+cada: contato esquerdo, passagem esquerda, contato direito, passagem
+direita. Clique num quadro para comparar a pose, reproduzir o ciclo,
+selecionar o tempo e ativar a sobreposição semitransparente (opacidade
+ajustável). Não são sprites externos: todos os desenhos são procedurais.
+
+O botão **Criar 4 keyframes nesta direção** cria um clipe por direção,
+como `walk.front` e `walk.left`. Cada clipe contém quatro poses mais
+um quinto quadro idêntico ao primeiro apenas para interpolar o fechamento
+do loop sem tranco. A ação não substitui clipes existentes sem confirmação;
+o clipe geral `walk` permanece como fallback. Para monstros sem anatomia
+bípede, o guia pode ser visto mas não é aplicado automaticamente.
+
+O jogo seleciona os clipes direcionais pelo vetor de movimento quando
+existem; projetos exportados continuam usando o esquema JSON `rig2d`
+versão 1, sem alterações necessárias na serialização. Exportar PNG não
+inclui a sobreposição do guia.
+
+**Referências consultadas** (nenhuma arte importada): [Hero character sprite
+sheet — CC0](https://opengameart.org/content/hero-character-sprite-sheet),
+[Walk Cycle Guide — CC0](https://opengameart.org/content/walk-cycle-guide),
+[Walk Cycle — Monmouth Animation](https://animation.monmouth.edu/instruct/animation/walk-cycle/).
+
+Para a caminhada suave tradicional, considere oito poses no ciclo
+completo (contato, baixa, passagem e alta em cada passo).
+Aqui a variante compacta de **quatro quadros** usa dois contatos e
+duas passagens, adequada à prévia do jogo.
