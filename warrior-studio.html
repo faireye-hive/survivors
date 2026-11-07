@@ -1,76 +1,149 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#101c25">
-  <meta name="description" content="Ateliê de arte procedural em Canvas 2D: visualize e exporte os personagens de Crônicas do Éter.">
-  <title>Ateliê 2D • Crônicas do Éter</title>
-  <style>
-    :root{color-scheme:dark;font:14px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;color:#eee7d6;background:#0b141c}
-    *{box-sizing:border-box}body{margin:0}.layout{min-height:100dvh;display:grid;grid-template-columns:minmax(275px,335px) 1fr}
-    aside{z-index:2;padding:28px;background:linear-gradient(160deg,#1d3037,#111c28 80%);border-right:1px solid #6d887844;overflow:auto}
-    a{color:#b8e9d2;text-decoration:none;font-weight:700;font-size:12px}a:hover{color:#ffdfaa}
-    .kicker{margin-top:32px;letter-spacing:.18em;text-transform:uppercase;color:#99cdb8;font-size:11px;font-weight:850}
-    h1{font:700 clamp(30px,3.2vw,42px)/1.12 Georgia,serif;margin:12px 0 15px}h1 span{color:#edc98d}
-    p{font-size:13px;color:#a9bdb5;max-width:37ch}
-    .group{margin-top:23px}.group label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#aacbbe;font-weight:850;margin-bottom:9px}
-    .choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-    button,select{font:inherit;cursor:pointer;border:1px solid #4d685f;background:#1c3540;color:#e5eae0;border-radius:9px;padding:10px 8px}
-    button:hover,button:focus-visible,select:focus-visible{border-color:#e8c98c;outline:none}
-    button.active{background:#e8c98c;color:#16252b;border-color:#e8c98c;font-weight:800}
-    select{width:100%}input[type=range]{width:100%;accent-color:#e6c589}
-    .row{display:flex;gap:9px;align-items:center;justify-content:space-between}.row output{color:#eed197;font-weight:700}
-    .primary{width:100%;margin-top:20px;padding:14px 12px;border:0;background:linear-gradient(130deg,#f3e2b0,#c9a466);color:#1c2824;font-weight:850}
-    .secondary{width:100%;margin-top:8px}.note{font-size:11px;margin-top:20px;color:#84a399}
-    main{position:relative;min-width:0;background:#14242c;display:flex;align-items:stretch;justify-content:stretch}
-    #stage{display:block;width:100%;height:100dvh;touch-action:none}
-    .badge{position:absolute;top:20px;left:20px;padding:8px 12px;border-radius:999px;border:1px solid #b4d5bc44;background:#0c202aba;color:#d8ecd9;font-size:10px;font-weight:900;letter-spacing:.14em;pointer-events:none}
-    .tip{position:absolute;bottom:18px;right:18px;color:#d2e5ddaa;font-size:11px;pointer-events:none;text-align:right}
-    [hidden]{display:none!important}
-    @media(max-width:760px){.layout{grid-template-columns:1fr}aside{padding:20px}.kicker{margin-top:20px}.group{margin-top:15px}#stage{height:55dvh;min-height:360px}main{order:-1}.badge{top:12px;left:12px}.tip{bottom:9px;right:9px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111b25">
+<meta name="description" content="Editor procedural Canvas 2D de personagens e monstros com rig articulado, keyframes e JSON.">
+<title>Rig Studio 2D · Crônicas do Éter</title>
+<style>
+:root{color-scheme:dark;font:13px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;background:#0a1118;color:#e4e9e6}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #e0c087;outline-offset:2px}
+header{height:66px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;background:#121e29;border-bottom:1px solid #2c4350}
+a{color:#a2d5c0;text-decoration:none;font-weight:750}a:hover{color:#e5c98d}
+h1{font:700 23px Georgia,serif;margin:0}h1 span{color:#dfc08b}
+header small{color:#84a99e;letter-spacing:.12em;font-size:10px;font-weight:900}#status{color:#9acfb6;font-size:11px}
+main{display:grid;grid-template-columns:270px minmax(340px,1fr) 294px;min-height:calc(100dvh - 66px)}
+aside{background:linear-gradient(165deg,#182935,#101d27);padding:19px;min-width:0;overflow:auto}
+.left{border-right:1px solid #324953}.right{border-left:1px solid #324953}
+section{padding-bottom:19px;margin-bottom:18px;border-bottom:1px solid #3b515544}
+section:last-child{border:0}
+h2{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:#a1c8b8;margin:0 0 13px}
+label{display:block;color:#acc2bd;font-size:11px;font-weight:750;margin:10px 0 5px}
+input:not([type=file]):not([type=range]):not([type=color]),select{width:100%;background:#213744;border:1px solid #47636e;border-radius:8px;padding:9px 10px;color:#f1f0e5}
+input[type=range]{width:100%;accent-color:#e8bf7e}
+input[type=color]{background:#223743;border:1px solid #54717a;border-radius:6px;width:38px;height:30px;padding:2px}
+button{border:1px solid #4a6872;background:#23404c;color:#e7eae2;border-radius:8px;padding:8px 10px}
+button:hover{background:#305361;border-color:#89afa0}button.primary{background:#dfc18a;border-color:#dfc18a;color:#15232a;font-weight:850}
+.row{display:flex;gap:7px;align-items:center}.row>button{flex:1}.row>input{min-width:0}
+.muted{font-size:11px;color:#8ba8a3;line-height:1.5}.hint{font-size:11px;color:#a7c3b9}
+.workspace{background:#10232a;min-width:0;display:flex;flex-direction:column;position:relative}
+.stage-header{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #36524b80}
+#actor-title{font-size:17px;font-weight:850}#actor-id{font:11px ui-monospace,monospace;color:#e2c48d}
+#stage{width:100%;height:clamp(320px,62dvh,750px);display:block;cursor:crosshair;touch-action:none}
+.stage-note{position:absolute;top:68px;left:18px;color:#c8e6da;font-size:11px;pointer-events:none;background:#1128329c;border:1px solid #73958144;border-radius:30px;padding:5px 11px}
+.timeline{margin-top:auto;padding:18px;background:#13252f;border-top:1px solid #36524b}
+.timeline-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.timeline-head strong{color:#e8c891}.timeline-head small{color:#a2bbb0}
+#scrub{width:100%}
+#frames{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:32px}
+#frames button{font:11px ui-monospace,monospace;padding:7px 10px}
+#frames button.active{background:#e8c991;color:#17242d;border-color:#e8c991}
+.timeline-actions{margin-top:10px;display:flex;flex-wrap:wrap;gap:7px}
+.timeline-actions button{flex:1;white-space:nowrap}
+#part-list{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+#part-list button{font-size:11px;text-align:left;padding:6px 7px}
+#part-list button.active{background:#d5b97e;color:#10232b;border-color:#d5b97e;font-weight:800}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.color-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.color-row label{display:flex;align-items:center;justify-content:space-between;gap:5px;margin:0;background:#1d333d;border:1px solid #3b575e;border-radius:8px;padding:6px;font-size:10px}
+.inspector-value{font:11px ui-monospace,monospace;color:#e6c58a}
+.field{display:flex;align-items:end;gap:5px}.field>div{flex:1;min-width:0}
+#json-preview{font:10px/1.4 ui-monospace,monospace;color:#abd4ca;white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;overflow:auto;border-radius:8px;padding:9px;background:#0c1920}
+#json-file{width:100%;font-size:11px;max-width:100%}
+#json-file::file-selector-button{background:#25424c;color:#d4ebdd;border:1px solid #567479;padding:8px;margin-right:8px;border-radius:7px}
+@media(max-width:1100px){main{grid-template-columns:230px minmax(300px,1fr)245px}aside{padding:12px}header{padding:0 14px}}
+@media(max-width:850px){main{grid-template-columns:1fr}.workspace{order:-1}.left,.right{border:0;border-top:1px solid #36524b}.right{display:grid;grid-template-columns:1fr 1fr;gap:15px}.right section{min-width:0}#stage{height:50dvh;min-height:320px}header small{display:none}}
+@media(max-width:480px){.right{display:block}header h1{font-size:18px}.stage-note{font-size:9px}#stage{height:370px}}
+</style>
 </head>
 <body>
-<div class="layout">
-  <aside>
-    <a href="./index.html">← VOLTAR AO JOGO</a>
-    <div class="kicker">✦ Ferramentas de arte procedural</div>
-    <h1>Ateliê de <span>Personagens 2D</span></h1>
-    <p>O mesmo desenho vetorial usado no jogo. Todos os traços, sombras e movimentos são feitos por código, diretamente no Canvas 2D.</p>
-    <div class="group"><label>Personagem</label><div class="choices" role="group" aria-label="Personagem">
-      <button type="button" data-class="guardian" class="active">Guerreiro</button>
-      <button type="button" data-class="mage">Arcanista</button>
-      <button type="button" data-class="ranger">Andarilho</button>
-    </div></div>
-    <div class="group"><label>Movimento</label><div class="choices" role="group" aria-label="Animação">
-      <button type="button" data-motion="idle" class="active">Parado</button>
-      <button type="button" data-motion="walk">Caminhar</button>
-      <button type="button" data-motion="attack">Ataque</button>
-    </div></div>
-    <div class="group"><label for="direction">Direção</label><select id="direction">
-      <option value="front">Frente</option><option value="back">Costas</option>
-      <option value="left">Esquerda</option><option value="right">Direita</option>
-    </select></div>
-    <div class="group"><label for="equipment">Equipamento do Guerreiro</label><select id="equipment">
-      <option value="full">Com espada</option><option value="unarmed">Sem espada</option>
-    </select></div>
-    <div class="group"><label for="background">Cenário</label><select id="background">
-      <option value="world">Floresta do jogo</option><option value="dark">Estúdio escuro</option>
-      <option value="light">Estúdio claro</option><option value="transparent">Transparente</option>
-    </select></div>
-    <div class="group"><div class="row"><label for="zoom">Zoom</label><output id="zoom-value" for="zoom">1.0×</output></div>
-      <input id="zoom" type="range" min=".5" max="2.5" value="1" step=".1"></div>
-    <button id="pause" class="secondary" type="button">Ⅱ Pausar animação</button>
-    <button id="export" class="primary" type="button">↓ EXPORTAR PERSONAGEM EM PNG</button>
-    <p class="note">A exportação é feita em um Canvas separado, com fundo transparente. Não utiliza imagens, modelos ou recursos externos.</p>
+<header>
+  <div><small>CRÔNICAS DO ÉTER · FERRAMENTAS</small><h1>✧ <span>Rig Studio</span> 2D</h1></div>
+  <span id="status" aria-live="polite">Carregado</span>
+  <a href="./index.html">← Voltar ao jogo</a>
+</header>
+<main>
+  <aside class="left">
+    <section>
+      <h2>01 · Personagens & monstros</h2>
+      <label for="character">Personagem</label><select id="character"></select>
+      <label for="character-name">Nome</label><input id="character-name" maxlength="60">
+      <p class="muted">O código abaixo é estável e também identifica o personagem no JSON e no jogo.</p>
+      <div class="row"><input id="new-id" placeholder="custom.meu-heroi" maxlength="40"><button id="clone-character">Criar</button></div>
+      <p class="hint">Criar duplica a aparência e as animações do personagem selecionado.</p>
+    </section>
+    <section>
+      <h2>02 · Animação</h2>
+      <label for="clip">Animação ativa</label><select id="clip"></select>
+      <div class="row" style="margin-top:9px"><input id="new-clip" placeholder="ex.: dance" maxlength="32"><button id="add-clip">Nova</button></div>
+      <div class="row" style="margin-top:9px"><button id="play">Ⅱ Pausar</button><button id="delete-clip">Excluir animação</button></div>
+      <div class="grid2">
+        <div><label for="duration">Duração (s)</label><input type="number" id="duration" min=".1" max="60" step=".1"></div>
+        <div><label for="loop">Repetição</label><select id="loop"><option value="yes">Loop</option><option value="no">Única vez</option></select></div>
+      </div>
+    </section>
+    <section>
+      <h2>03 · Visualização</h2>
+      <label for="direction">Orientação</label><select id="direction"><option value="front">Frente</option><option value="back">Costas</option><option value="left">Esquerda</option><option value="right">Direita</option></select>
+      <label for="background">Fundo</label><select id="background"><option value="dark">Estúdio escuro</option><option value="light">Estúdio claro</option><option value="transparent">Transparência (xadrez)</option><option value="world">Floresta do jogo</option></select>
+      <label for="zoom">Zoom · <output id="zoom-label">2.6×</output></label><input type="range" id="zoom" min="1.5" max="5" step=".1" value="2.6">
+      <label for="show-handles"><input type="checkbox" id="show-handles" checked> Mostrar articulações na tela</label>
+    </section>
+    <section>
+      <h2>04 · Arquivos</h2>
+      <button class="primary" id="export-character" style="width:100%">↓ Baixar JSON deste personagem</button>
+      <button id="export-all" style="width:100%;margin-top:7px">↓ Baixar projeto completo</button>
+      <label for="json-file">Importar JSON (substitui IDs coincidentes)</label>
+      <input type="file" id="json-file" accept=".json,application/json">
+      <button id="export-png" style="width:100%;margin-top:10px">↓ Exportar pose em PNG</button>
+      <button id="reset-project" style="width:100%;margin-top:7px">Restaurar personagens padrão</button>
+      <p class="muted">Projeto salvo automaticamente no navegador. Exporte o JSON para compartilhar suas animações ou continuar em outro dispositivo.</p>
+    </section>
   </aside>
-  <main>
-    <canvas id="stage" aria-label="Prévia do personagem desenhado em Canvas 2D"></canvas>
-    <div class="badge">CANVAS 2D · 100% CÓDIGO</div>
-    <div class="tip">Prévia do personagem em tempo real</div>
-  </main>
-</div>
+  <div class="workspace">
+    <div class="stage-header"><strong id="actor-title">Guerreiro</strong><span id="actor-id">hero.guardian</span></div>
+    <canvas id="stage" aria-label="Editor e prévia do personagem Canvas 2D com articulações arrastáveis"></canvas>
+    <span class="stage-note">Clique nas articulações para selecionar · Arraste para mover</span>
+    <div class="timeline">
+      <div class="timeline-head"><strong id="clip-title">idle</strong><small id="time-label">0.00 / 1.20 s</small></div>
+      <input type="range" id="scrub" min="0" max="1.2" step=".01" value="0" aria-label="Tempo da animação">
+      <div id="frames" aria-label="Keyframes da animação"></div>
+      <div class="timeline-actions">
+        <button class="primary" id="add-frame">◆ Salvar pose / keyframe</button>
+        <button id="copy-frame">Duplicar pose anterior</button>
+        <button id="delete-frame">Excluir keyframe</button>
+      </div>
+    </div>
+  </div>
+  <aside class="right">
+    <section>
+      <h2>05 · Articulações</h2>
+      <div id="part-list" role="group" aria-label="Peças editáveis"></div>
+      <p class="muted">Olhos, boca, mãos, pés, cabeça, arma, braços e corpo têm posição, rotação e tamanho independentes. Peças filhas acompanham os pivôs dos pais.</p>
+    </section>
+    <section>
+      <h2 id="part-title">06 · Cabeça</h2>
+      <div class="grid2">
+        <div><label for="part-x">Posição X</label><input type="number" id="part-x" min="-90" max="90" step=".5"></div>
+        <div><label for="part-y">Posição Y</label><input type="number" id="part-y" min="-90" max="90" step=".5"></div>
+        <div><label for="part-rotation">Rotação (°)</label><input type="number" id="part-rotation" min="-180" max="180" step="1"></div>
+        <div><label for="part-scale">Tamanho (×)</label><input type="number" id="part-scale" min=".2" max="3" step=".05"></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button id="reset-part">Zerar peça</button><button id="reset-pose">Zerar pose</button></div>
+    </section>
+    <section>
+      <h2>07 · Cores & material</h2>
+      <div id="colors" class="color-row"></div>
+    </section>
+    <section>
+      <h2>08 · Dados do keyframe</h2>
+      <pre id="json-preview"></pre>
+      <p class="muted">JSON com ID, aparência, clipes, duração, loop e poses. Os mesmos IDs são resolvidos pelo jogo.</p>
+    </section>
+  </aside>
+</main>
 <script type="module" src="./src/studio/WarriorStudio.js"></script>
 </body>
 </html>

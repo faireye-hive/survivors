@@ -49,3 +49,15 @@ Abra warrior-studio.html para visualizar as três classes com a mesma arte usada
 O Vite produz um site estático. O workflow .github/workflows/pages.yml publica dist/ no GitHub Pages a partir da branch main.
 
 Consulte docs/ARCHITECTURE.md para notas de desenvolvimento.
+
+## Rig Studio 2D · personagens e animações
+
+O ateliê `warrior-studio.html` agora é um editor de animação para as três classes e os cinco monstros. Todos usam o mesmo renderizador `src/render/characters/RigRenderer.js`, inclusive o Guerreiro: não há mais um estilo vetorial diferente só para ele.
+
+Cada personagem possui um ID estável: `hero.guardian`, `hero.mage`, `hero.ranger`, `monster.slime`, `monster.bat`, `monster.skeleton`, `monster.wraith`, `monster.colossus`. Também é possível criar um ID próprio no editor clonando um personagem existente.
+
+Clique numa articulação ou selecione uma peça para ajustar posição X/Y, rotação e escala; os olhos e a boca acompanham a cabeça, as mãos acompanham os braços e a arma acompanha a mão direita. Crie keyframes, defina duração e loop, reproduza a animação e exporte **JSON do personagem** ou **projeto completo**. Há importação com validação de esquema e salvamento automático em localStorage.
+
+O formato de projeto é `{ "schema": "cronicas-do-eter/rig2d", "version": 1, "characters": [...] }`. Cada personagem tem `id`, `template`, `name`, `colors` e `clips`; cada clipe contém `id`, `duration`, `loop`, e `frames: [{ time, pose }] `. A pose mapeia IDs de peças (`head`, `eyeL`, `mouth`, `handR`, `footL`, `weapon`, etc.) para deslocamentos, ângulos e escala. Os dados importados são validados e os mesmos clipes são usados pelo jogo após recarregar a página no mesmo navegador e origem.
+
+**Importante:** a aparência de um personagem novo usa um dos modelos visuais existentes. Para criar uma nova espécie com anatomia própria, será necessário acrescentar novas formas ao renderizador além dos keyframes.

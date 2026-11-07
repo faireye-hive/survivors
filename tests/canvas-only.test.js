@@ -17,7 +17,7 @@ test('o jogo e o ateliê utilizam exclusivamente Canvas 2D',()=>{
   assert.ok(!html.includes('warrior-compare'));
   assert.ok(!studio.includes('hero-3d'));
   assert.ok(editor.includes("getContext('2d')"));
-  assert.ok(editor.includes('drawPlayer('));
+  assert.ok(editor.includes('drawRigActor('));
   assert.ok(!/WebGL|warrior3D|render\/three|\.glb|\.fbx/.test(renderer));
   assert.ok(!/mixamo|compare|animationStudio/.test(vite));
   assert.ok(renderer.includes('drawPlayer(c,p,w/2,h/2,game.elapsed)'));
