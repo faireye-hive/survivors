@@ -1,6 +1,7 @@
 import { World } from '../world/World.js';
 import {drawRigActor, getRigHandles} from '../render/characters/RigRenderer.js';
 import {drawWalkReference} from './WalkReference.js';
+import {studioViewport} from './StageViewport.js';
 import {WALK_DIRECTIONS,WALK_LABELS,WALK_FRAME_LABELS,WALK_FRAME_NOTES,
   walkGuideClipId,createDirectionalWalkClip,isWalkRig} from '../data/WalkGuide.js';
 import {NODES,RIG_IDS,RIG_PRESETS,RIG_SCHEMA,RIG_VERSION,createFrame,findClip,newCharacter,
@@ -14,7 +15,7 @@ const world=new World(173);
 let project=readRigProject();
 const state={characterId:project.characters[0].id,clipId:'walk.front',selected:'head',time:0,
   playing:true,background:'dark',face:'front',zoom:2.6,handles:true,tool:'rotate',
-  referenceFrame:0,referenceOverlay:true,referenceOpacity:.55};
+  referenceFrame:0,referenceOverlay:false,referenceOpacity:.55};
 let width=1,height=1,dpr=1,last=0,dragging=null,refreshAt=0;
 const paletteNames={primary:'Principal',secondary:'Secundária',accent:'Detalhes',
   skin:'Pele/rosto',outline:'Contorno',eyes:'Olhos',metal:'Metal'};
@@ -208,8 +209,22 @@ function selectReference(direction,frame,activateClip=true){
   }
   refreshReferenceUI();
 }
+function showReferences(visible){
+  const panel=$('walk-reference');
+  panel.hidden=!visible;
+  const toggle=$('reference-toggle');
+  toggle.setAttribute('aria-expanded',String(visible));
+  toggle.textContent=visible?'▦ Ocultar poses de referência':'▦ Mostrar poses de referência';
+  // Dismissing the panel also dismisses its ghost skeleton from the canvas.
+  if(!visible){
+    state.referenceOverlay=false;
+    $('reference-overlay').checked=false;
+  }
+}
+$('reference-toggle').addEventListener('click',()=>
+  showReferences($('walk-reference').hidden));
 $('reference-overlay').addEventListener('change',event=>{
-  state.referenceOverlay=event.target.checked;
+  state.referenceOverlay=event.target.checked&&!$('walk-reference').hidden;
 });
 $('reference-opacity').addEventListener('input',event=>{
   state.referenceOpacity=Number(event.target.value);
@@ -371,8 +386,10 @@ function drawBackdrop(c,w,h){
 }
 function drawPose(c,w,h,t,zoom,handles=false){
   const selected=character(),pose=sampleCharacter(selected,clip().id,t);
-  const effectiveZoom=selected.template==='monster.colossus'?zoom*.61:zoom;
-  c.save();c.translate(w/2,h*.79);c.scale(effectiveZoom,effectiveZoom);
+  // Use neutral anatomy for the viewport: keeping the transform constant
+  // across keyframes prevents visible jumping and keeps pointer picking exact.
+  const view=studioViewport(w,h,zoom,selected);
+  c.save();c.translate(view.x,view.y);c.scale(view.zoom,view.zoom);
   drawRigActor(c,{},0,0,t,{
     id:selected.id,character:selected,pose,face:state.face,
     shadow:!handles,showHandles:handles&&state.handles,selected:state.selected
@@ -420,9 +437,9 @@ function paint(now){
 function pointerToRig(event){
   const r=canvas.getBoundingClientRect();
   const signed=state.face==='left'?-1:1;
-  const size=state.zoom*2.2*(character().template==='monster.colossus'?.61*1.65:1);
-  return {x:((event.clientX-r.left)-width/2)/size*signed,
-    y:((event.clientY-r.top)-height*.79)/size};
+  const view=studioViewport(width,height,state.zoom*2.2,character());
+  return {x:((event.clientX-r.left)-view.x)/view.scale*signed,
+    y:((event.clientY-r.top)-view.y)/view.scale};
 }
 // Selected bone has an arc and an amber rotation knob. Drag the knob for
 // angular rotation; dragging the central joint uses a stable degree-per-pixel
@@ -482,7 +499,7 @@ canvas.addEventListener('pointermove',event=>{
       const delta=shortestAngle(angleBetween(d.pivot,point)-d.angle);
       degrees=d.initial+delta*180/Math.PI;
     }else{
-      const size=state.zoom*2.2;
+      const size=studioViewport(width,height,state.zoom*2.2,character()).scale;
       const signed=state.face==='left'?-1:1;
       degrees=d.initial+(point.x-d.startPointer.x)*size*.48*signed
         -(point.y-d.startPointer.y)*size*.18;
