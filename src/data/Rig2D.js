@@ -155,6 +155,8 @@ export function sampleClip(clip,time){
   if(!frames.length)return {};
   const duration=clip.duration||1;
   const t=clip.loop?((time%duration)+duration)%duration:clamp(time,0,duration);
+  // Avoid floating-point interpolation drift at the exact saved keyframe.
+  for(const frame of frames)if(Math.abs(frame.time-t)<1e-9)return structuredClone(frame.pose);
   let a=frames[0],b=frames[frames.length-1];
   if(t<=a.time)return structuredClone(a.pose);
   if(t>=b.time)return structuredClone(b.pose);
