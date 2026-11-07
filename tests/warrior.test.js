@@ -39,14 +39,17 @@ test('heróis e monstros compartilham o mesmo Canvas 2D e rig de 14 peças',()=>
 });
 test('pivôs e hierarquia acompanham movimento da cabeça, olhos, mãos e arma',()=>{
   const neutral=getRigHandles({});
-  const pose={head:{x:3,rotation:90,scale:1.3},handR:{x:4,y:-3},
-    weapon:{rotation:-20},footL:{y:2}};
+  const pose={head:{x:3,rotation:90,scale:1.3},armR:{rotation:35},
+    weapon:{rotation:-20},footL:{rotation:15}};
   const joints=getRigHandles(pose);
   assert.equal(Object.keys(joints).length,Object.keys(NODES).length);
   assert.notEqual(joints.eyeL.x,neutral.eyeL.x);
   assert.notEqual(joints.eyeR.y,neutral.eyeR.y);
+  // Articulated parts rotate around their fixed pivots.
+  assert.equal(joints.armR.x,neutral.armR.x);
   assert.notEqual(joints.weapon.x,neutral.weapon.x);
-  assert.notEqual(joints.footL.y,neutral.footL.y);
+  assert.equal(joints.footL.y,neutral.footL.y);
+  assert.notEqual(joints.footL.rotation,neutral.footL.rotation);
   assert.equal(joints.head.scale,1.3);
 });
 test('exportação/importação JSON preserva IDs, frames e cores; rejeita payload inválido',()=>{

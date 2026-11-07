@@ -104,8 +104,13 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
   </aside>
   <div class="workspace">
     <div class="stage-header"><strong id="actor-title">Guerreiro</strong><span id="actor-id">hero.guardian</span></div>
+    <div class="row" id="rig-tools" role="group" aria-label="Ferramenta do rig">
+      <button id="tool-rotate" class="primary" aria-pressed="true" type="button">↻ Girar articulação</button>
+      <button id="tool-move" aria-pressed="false" type="button">✥ Mover posição</button>
+      <span class="hint">Amarelo: alça de rotação · Ponto: pivô</span>
+    </div>
     <canvas id="stage" aria-label="Editor e prévia do personagem Canvas 2D com articulações arrastáveis"></canvas>
-    <span class="stage-note">Clique nas articulações para selecionar · Arraste para mover</span>
+    <span class="stage-note">Selecione o ponto de uma peça e arraste para GIRAR · Arraste a alça amarela para rotação precisa</span>
     <div class="timeline">
       <div class="timeline-head"><strong id="clip-title">idle</strong><small id="time-label">0.00 / 1.20 s</small></div>
       <input type="range" id="scrub" min="0" max="1.2" step=".01" value="0" aria-label="Tempo da animação">
@@ -121,7 +126,7 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
     <section>
       <h2>05 · Articulações</h2>
       <div id="part-list" role="group" aria-label="Peças editáveis"></div>
-      <p class="muted">Olhos, boca, mãos, pés, cabeça, arma, braços e corpo têm posição, rotação e tamanho independentes. Peças filhas acompanham os pivôs dos pais.</p>
+      <p class="muted">Cada espécie tem peças próprias. Os monstros não recebem pernas, pés, mãos ou armas de humano quando não fazem parte de sua anatomia. Todas as peças giram conectadas ao seu pivô.</p>
     </section>
     <section>
       <h2 id="part-title">06 · Cabeça</h2>
@@ -131,6 +136,9 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
         <div><label for="part-rotation">Rotação (°)</label><input type="number" id="part-rotation" min="-180" max="180" step="1"></div>
         <div><label for="part-scale">Tamanho (×)</label><input type="number" id="part-scale" min=".2" max="3" step=".05"></div>
       </div>
+      <label for="rotation-dial">Giro interativo <output id="rotation-value">0°</output></label>
+      <input id="rotation-dial" type="range" min="-180" max="180" step="1" value="0">
+      <p id="rig-lock-hint" class="hint">A articulação gira no próprio encaixe, sem separar as peças.</p>
       <div class="row" style="margin-top:12px"><button id="reset-part">Zerar peça</button><button id="reset-pose">Zerar pose</button></div>
     </section>
     <section>

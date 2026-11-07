@@ -64,3 +64,16 @@ atualizações do jogo via `requestAnimationFrame`. Futuras melhorias:
 cache de poses de multidões e spatial hash de colisões.
 
 Execute `npm test` e `npm run build` antes da publicação no GitHub Pages.
+
+## Anatomia e edição com restrições
+
+`RIG_ANATOMY` seleciona as peças reais de cada espécie. `rigNodeDefinition`
+fornece pivôs próprios (ex.: rosto dentro do slime, asas do morcego), e
+`getRigHandles(pose,character)` devolve somente as juntas dessa anatomia.
+Monstros não compartilham a estrutura humana por acidente.
+
+O editor oferece dois gestos: girar no pivô (padrão, com alça circular)
+e mover partes com mobilidade definida. `rigOffsetRange` e
+`boundedRigValue` limitam deslocamentos na interface, no desenho
+e na validação de JSON; articulações rígidas têm deslocamento zero
+e permitem rotação. Os descendentes seguem a transformação do pai.

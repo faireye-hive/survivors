@@ -61,3 +61,19 @@ Clique numa articulação ou selecione uma peça para ajustar posição X/Y, rot
 O formato de projeto é `{ "schema": "cronicas-do-eter/rig2d", "version": 1, "characters": [...] }`. Cada personagem tem `id`, `template`, `name`, `colors` e `clips`; cada clipe contém `id`, `duration`, `loop`, e `frames: [{ time, pose }] `. A pose mapeia IDs de peças (`head`, `eyeL`, `mouth`, `handR`, `footL`, `weapon`, etc.) para deslocamentos, ângulos e escala. Os dados importados são validados e os mesmos clipes são usados pelo jogo após recarregar a página no mesmo navegador e origem.
 
 **Importante:** a aparência de um personagem novo usa um dos modelos visuais existentes. Para criar uma nova espécie com anatomia própria, será necessário acrescentar novas formas ao renderizador além dos keyframes.
+
+### Rig Studio: anatomia por espécie e articulações conectadas
+
+Os monstros não usam o esqueleto humano por padrão: o limo é uma única massa com rosto;
+o morcego usa asas sem pernas; o espectro usa um manto flutuante sem pés; o esqueleto
+usa ossos (sem sapatos); e o colosso possui membros rochosos, sem mãos ou pés humanos.
+O editor só mostra os controles das peças existentes para cada espécie.
+
+**Girar articulação** é a ferramenta padrão: selecione um pivô e arraste para girar,
+ou use a alça amarela e o slider de rotação no inspetor. O pivô permanece preso,
+seus filhos acompanham o giro e a malha não se desmonta. **Mover posição** permite
+deslocar o tronco, a cabeça em poucos pixels e olhos/boca dentro do rosto;
+as juntas de braços, mãos, pernas, pés e armas permanecem encaixadas.
+Se um JSON antigo possuir deslocamentos exagerados em juntas conectadas,
+esses valores são normalizados durante a importação/validação para evitar separações.
+O formato `rig2d` continua na versão 1 e mantém os mesmos IDs de peças.
