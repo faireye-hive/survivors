@@ -42,6 +42,27 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
 #frames button.active{background:#e8c991;color:#17242d;border-color:#e8c991}
 .timeline-actions{margin-top:10px;display:flex;flex-wrap:wrap;gap:7px}
 .timeline-actions button{flex:1;white-space:nowrap}
+/* Four-direction walk-reference dock: 4 directions × 4 poses. */
+#walk-reference{background:linear-gradient(155deg,#1c323b,#132732);border:1px solid #42636a;border-radius:12px;padding:12px;margin-bottom:15px}
+#walk-reference h2{color:#e7c991;margin-bottom:5px}
+#reference-grid{display:grid;gap:10px;margin:12px 0}
+.walk-ref-row{min-width:0}
+.walk-ref-label{display:flex;align-items:center;gap:6px;color:#bcd7cf;font-size:10px;font-weight:800;letter-spacing:.03em;margin:0 0 5px}
+.walk-ref-frames{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.walk-ref-frames button{padding:3px 1px 5px;min-width:0;background:#0f222b;border:1px solid #36545d;border-radius:6px;line-height:1}
+.walk-ref-frames button:hover{background:#233c44}
+.walk-ref-frames button.active{background:#283f47;border-color:#f4d39a;box-shadow:0 0 0 1px #f4d39a66}
+.walk-ref-frames canvas{display:block;max-width:100%;width:100%;height:73px;margin:auto}
+.walk-ref-frames button small{display:block;color:#adcbc2;font-size:10px;margin-top:2px}
+.walk-ref-frames button.active small{color:#ffe2a0}
+#reference-caption{color:#d9e4da;font-size:11px;min-height:34px}
+#reference-grid .swatch{color:#8cd4e5}
+.reference-controls{display:grid;grid-template-columns:1fr;gap:7px}
+.reference-controls label{margin:4px 0 0}
+#reference-apply{width:100%;background:#516d5c;border-color:#a0b6a0;color:#f5f5e6}
+#reference-apply:disabled{opacity:.45;cursor:not-allowed}
+#reference-sources{display:block;font-size:10px;color:#9cb7af;margin-top:10px}
+#reference-sources a{text-decoration:underline;font-weight:500}
 #part-list{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 #part-list button{font-size:11px;text-align:left;padding:6px 7px}
 #part-list button.active{background:#d5b97e;color:#10232b;border-color:#d5b97e;font-weight:800}
@@ -123,6 +144,25 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
     </div>
   </div>
   <aside class="right">
+    <section id="walk-reference">
+      <h2>↟ Referência de caminhada · 4 direções</h2>
+      <p class="muted">Esqueleto de exemplo: <b>4 quadros por direção</b> (2 contatos + 2 passagens). Clique em uma pose para comparar e editar.</p>
+      <div id="reference-grid" aria-label="Dezesseis quadros de caminhada: quatro em cada direção"></div>
+      <p id="reference-caption" aria-live="polite">01 · Contato esquerdo</p>
+      <div class="reference-controls">
+        <label for="reference-overlay"><input type="checkbox" id="reference-overlay" checked> Sobrepor esqueleto no personagem</label>
+        <label for="reference-opacity">Opacidade do guia · <output id="reference-opacity-label">55%</output></label>
+        <input type="range" id="reference-opacity" min=".1" max="1" step=".05" value=".55">
+        <button type="button" id="reference-apply">＋ Criar 4 keyframes nesta direção</button>
+      </div>
+      <p class="hint" id="reference-help">Cria um clipe separado: walk.front, walk.back, walk.left ou walk.right. Não altera seus clipes existentes sem confirmação.</p>
+      <small id="reference-sources">
+        Referências consultadas:
+        <a target="_blank" rel="noopener noreferrer" href="https://opengameart.org/content/hero-character-sprite-sheet">sprites 4 direções (CC0)</a> ·
+        <a target="_blank" rel="noopener noreferrer" href="https://opengameart.org/content/walk-cycle-guide">guia de caminhada (CC0)</a>.
+        Bonecos desenhados originalmente em Canvas.
+      </small>
+    </section>
     <section>
       <h2>05 · Articulações</h2>
       <div id="part-list" role="group" aria-label="Peças editáveis"></div>
