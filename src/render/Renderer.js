@@ -1,31 +1,14 @@
 import { drawPlayer, drawEnemy, drawDrop, drawProjectile, drawEffect } from './Art.js';
 
+// All gameplay visuals use the same CanvasRenderingContext2D.
 export class Renderer {
-  constructor(){
-    this.warrior3D=null;this.warrior3DLoading=false;this.warrior3DFailed=false;
-  }
-  ensureWarrior3D(){
-    if(this.warrior3D||this.warrior3DLoading||this.warrior3DFailed)return;
-    this.warrior3DLoading=true;
-    // A lazy module preserves the 2D engine when WebGL is not available.
-    import('./three/WarriorSpriteRenderer.js')
-      .then(({WarriorSpriteRenderer})=>{
-        this.warrior3D=new WarriorSpriteRenderer();
-      })
-      .catch(error=>{
-        this.warrior3DFailed=true;
-        console.warn('[Crônicas do Éter] Guerreiro 3D não carregou; mantendo arte 2D.',error);
-      })
-      .finally(()=>{this.warrior3DLoading=false;});
-  }
-  destroy(){this.warrior3D?.dispose();this.warrior3D=null;}
+  destroy() {}
   render(game) {
     const c=game.ctx,w=game.width,h=game.height,p=game.player;
     c.setTransform(game.dpr,0,0,game.dpr,0,0);
     c.clearRect(0,0,w,h);
     c.fillStyle='#17312d';c.fillRect(0,0,w,h);
     const camX=p.x-w/2,camY=p.y-h/2;
-    if(p.classId==='guardian'&&game.state==='playing')this.ensureWarrior3D();
     game.world.draw(c,camX,camY,w,h,game.elapsed);
     const aura=game.weapons.find(v=>v.id==='aura');
     if(aura){c.strokeStyle='#90d8bb44';c.lineWidth=2;c.beginPath();c.arc(w/2,h/2,92+aura.level*11,0,Math.PI*2);c.stroke();}
@@ -38,9 +21,7 @@ export class Renderer {
     actors.sort((a,b)=>a.y-b.y);
     for(const actor of actors){
       if(actor.player){
-        const drawn=p.classId==='guardian'&&this.warrior3D?.draw(c,p,w/2,h/2,game.elapsed,
-          game.paused?0:(game.frameDt||0));
-        if(!drawn)drawPlayer(c,p,w/2,h/2,game.elapsed);
+        drawPlayer(c,p,w/2,h/2,game.elapsed);
       }
       else{
         const e=actor.enemy,x=e.x-camX,y=e.y-camY;

@@ -1,8 +1,0 @@
-# Gray clay material, texture-free, for Mixamo automatic rigging
-newmtl argila_c
-Ka 0.2 0.2 0.2
-Kd 0.7843 0.7804 0.7686
-Ks 0.02 0.02 0.02
-Ns 1
-d 1.0
-illum 2

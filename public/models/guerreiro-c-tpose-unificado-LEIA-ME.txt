@@ -1,7 +1,0 @@
-MODELO C PROCEDURAL - T-POSE UNIFICADO
-
-Malha recomposta por voxelizacao da escultura original do modelo C.
-Tem menos detalhes finos do que o OBJ original, mas uma unica
-superficie fechada, sem fragmentos soltos. Nao possui esqueleto.
-O autorig do Mixamo ainda precisa ser testado.
-Escala 180cm, vertical +Y, frente +Z.

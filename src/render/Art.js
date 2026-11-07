@@ -5,11 +5,14 @@ function circle(c,x,y,r,color){c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,PI2
 function oval(c,x,y,rx,ry,color){c.fillStyle=color;c.beginPath();c.ellipse(x,y,rx,ry,0,0,PI2);c.fill();}
 function polygon(c,points,color){c.fillStyle=color;c.beginPath();c.moveTo(...points[0]);for(const pt of points.slice(1))c.lineTo(...pt);c.closePath();c.fill();}
 function line(c,pts,color,width=2){c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(...pts[0]);for(const p of pts.slice(1))c.lineTo(...p);c.stroke();}
-export function drawPlayer(c,p,x,y,t){
+export function drawPlayer(c,p,x,y,t,options={}){
   // Guardião desenhado com o rig vetorial de alta definição, isolado por personagem.
-  if(p.classId==='guardian')return drawWarrior(c,p,x,y,t,{scale:.86});
+  if(p.classId==='guardian')return drawWarrior(c,p,x,y,t,{scale:.46,...options});
   if(p.inv>0&&Math.floor(t*14)%2===0)return;
   c.save();c.translate(x,y);
+  const back=options.face==='back'||(options.face!=='front'&&Math.sin(p.facing||0)<-.55);
+  const mirror=options.face==='left'||(options.face!=='right'&&p.vx< -8);
+  if(mirror)c.scale(-1,1);
   const step=Math.sin(t*11)*Math.min(1,Math.hypot(p.vx,p.vy)/90);
   oval(c,0,7,22,8,'#06121bb5');
   line(c,[[-7,-7],[-8+step*4,11]],'#394b4b',9);line(c,[[7,-7],[8-step*4,11]],'#394b4b',9);
@@ -17,10 +20,15 @@ export function drawPlayer(c,p,x,y,t){
   oval(c,0,-21,16,18,p.classId==='mage'?'#596da8':p.classId==='ranger'?'#4d8469':'#9aa9a0');
   polygon(c,[[-10,-34],[0,-26],[10,-34],[7,-9],[0,-5],[-7,-9]],p.classId==='mage'?'#2d467e':p.classId==='ranger'?'#244d42':'#d8d8bb');
   oval(c,-15,-19,7,10,'#8fa7a2');oval(c,15,-19,7,10,'#8fa7a2');
-  circle(c,0,-41,13,'#c69a7c');
+  circle(c,0,-41,13,back?'#393f4b':'#c69a7c');
   polygon(c,[[-13,-42],[-10,-53],[3,-56],[12,-49],[13,-41],[4,-49],[-4,-45]],p.classId==='mage'?'#d2ccdf':'#42342f');
-  line(c,[[-7,-41],[-3,-41]],'#183b39',2);line(c,[[4,-41],[8,-41]],'#183b39',2);
-  circle(c,-4,-41,1.5,'#d9f6e8');circle(c,6,-41,1.5,'#d9f6e8');
+  if(back){
+    oval(c,0,-41,10,9,p.classId==='mage'?'#756b93':'#324b3e');
+    line(c,[[-11,-36],[10,-36]],'#879e95',1.5);
+  }else{
+    line(c,[[-7,-41],[-3,-41]],'#183b39',2);line(c,[[4,-41],[8,-41]],'#183b39',2);
+    circle(c,-4,-41,1.5,'#d9f6e8');circle(c,6,-41,1.5,'#d9f6e8');
+  }
   circle(c,0,-20,3,'#f0cf85');
   if(p.classId==='mage'){
     line(c,[[18,-12],[21,-60]],'#886c55',5);

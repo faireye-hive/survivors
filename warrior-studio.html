@@ -1,71 +1,76 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1923"><title>Ateliê do Guerreiro • Crônicas do Éter</title>
-<style>
-:root{color-scheme:dark;font:14px system-ui,-apple-system,'Segoe UI',sans-serif;color:#eee7d6;background:#09131e}*{box-sizing:border-box}
-body{margin:0}.layout{min-height:100dvh;display:grid;grid-template-columns:minmax(280px,350px) 1fr}
-aside{z-index:2;padding:27px;background:linear-gradient(155deg,#1b3039,#0c1723);border-right:1px solid #668a8055}
-a{font-size:11px;color:#bde8ce;text-decoration:none;font-weight:700}a:hover{color:#fff1c1}
-.kicker{letter-spacing:.2em;color:#9acfb4;font-size:10px;font-weight:800;margin-top:30px}
-h1{font:700 44px/1.07 Georgia,serif;margin:12px 0}h1 span{color:#edc787}
-p{font-size:12px;line-height:1.65;color:#b2c5bf;margin:0 0 14px}
-hr{border:0;border-top:1px solid #70968850;margin:22px 0}
-.control{margin:18px 0}.control label{font-size:10px;color:#b5d7bf;font-weight:800;letter-spacing:.13em;display:block;margin-bottom:10px}
-.control output{float:right;color:#f7d89a;font-size:12px}
-.choices{display:flex;gap:6px}.choices button{flex:1;min-width:0;border:1px solid #486962;background:#19313c;color:#d2e5df;border-radius:7px;padding:11px 3px;cursor:pointer;font-size:11px}
-.choices button.active,.choices button:hover{background:#dec28a;color:#19241d;border-color:#f0d8a2;font-weight:800}
-select{width:100%;background:#19313c;color:#e8f1e0;border:1px solid #54766d;padding:10px;border-radius:8px}
-input[type=range]{accent-color:#dec28a;width:100%}
-.primary{width:100%;padding:15px 10px;border:0;border-radius:7px;cursor:pointer;background:linear-gradient(125deg,#f2e2ab,#c9a666);color:#20241b;font-size:11px;font-weight:900;letter-spacing:.08em}
-.primary.secondary{margin-top:9px;border:1px solid #4c736a;background:#1d3b43;color:#d7e8df}
-.hint{font-size:10px;line-height:1.7;color:#809e9a;margin-top:20px}
-main{position:relative;min-width:0;background:radial-gradient(ellipse at 50% 55%,#295147,#0d1e2c)}
-#stage{display:block;width:100%;height:100dvh}#hero-3d{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}#hero-3d:active{cursor:grabbing}#hero-3d[hidden]{display:none}
-.tags{position:absolute;top:22px;left:22px;display:flex;gap:8px;pointer-events:none}
-.tags span{border:1px solid #659b8870;background:#0b1c28c9;color:#bcecd6;padding:8px 10px;border-radius:7px;font-weight:800;font-size:9px;letter-spacing:.09em}
-.caption{position:absolute;bottom:25px;left:50%;transform:translateX(-50%);font:20px Georgia,serif;white-space:nowrap;color:#f1d59e;text-shadow:0 2px 10px #000;pointer-events:none;text-align:center}
-.caption small{display:block;font:9px system-ui;color:#b6ded3;letter-spacing:.2em;margin-top:7px}
-@media(max-width:780px){.layout{display:block}aside{border-right:0;padding:15px 16px}
-.kicker{margin-top:10px}h1{font-size:29px;margin:5px 0}p{font-size:11px;line-height:1.4;margin:0 0 8px}
-hr{margin:12px 0}.control{margin:9px 0}.control label{margin-bottom:6px}.choices button{padding:7px 2px}
-.primary{padding:11px}.hint{display:none}main{min-height:440px}#stage{height:440px}#hero-3d{height:440px}
-.tags{top:10px;left:10px}.tags span{padding:6px;font-size:8px}
-.caption{font-size:15px;bottom:12px}}
-</style><!-- Compatibility for GitHub Pages serving original sources without Vite.
-     Vite-built pages already bundle Three.js, so this map is unused. -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
-  }
-}
-</script>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101c25">
+  <meta name="description" content="Ateliê de arte procedural em Canvas 2D: visualize e exporte os personagens de Crônicas do Éter.">
+  <title>Ateliê 2D • Crônicas do Éter</title>
+  <style>
+    :root{color-scheme:dark;font:14px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;color:#eee7d6;background:#0b141c}
+    *{box-sizing:border-box}body{margin:0}.layout{min-height:100dvh;display:grid;grid-template-columns:minmax(275px,335px) 1fr}
+    aside{z-index:2;padding:28px;background:linear-gradient(160deg,#1d3037,#111c28 80%);border-right:1px solid #6d887844;overflow:auto}
+    a{color:#b8e9d2;text-decoration:none;font-weight:700;font-size:12px}a:hover{color:#ffdfaa}
+    .kicker{margin-top:32px;letter-spacing:.18em;text-transform:uppercase;color:#99cdb8;font-size:11px;font-weight:850}
+    h1{font:700 clamp(30px,3.2vw,42px)/1.12 Georgia,serif;margin:12px 0 15px}h1 span{color:#edc98d}
+    p{font-size:13px;color:#a9bdb5;max-width:37ch}
+    .group{margin-top:23px}.group label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#aacbbe;font-weight:850;margin-bottom:9px}
+    .choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+    button,select{font:inherit;cursor:pointer;border:1px solid #4d685f;background:#1c3540;color:#e5eae0;border-radius:9px;padding:10px 8px}
+    button:hover,button:focus-visible,select:focus-visible{border-color:#e8c98c;outline:none}
+    button.active{background:#e8c98c;color:#16252b;border-color:#e8c98c;font-weight:800}
+    select{width:100%}input[type=range]{width:100%;accent-color:#e6c589}
+    .row{display:flex;gap:9px;align-items:center;justify-content:space-between}.row output{color:#eed197;font-weight:700}
+    .primary{width:100%;margin-top:20px;padding:14px 12px;border:0;background:linear-gradient(130deg,#f3e2b0,#c9a466);color:#1c2824;font-weight:850}
+    .secondary{width:100%;margin-top:8px}.note{font-size:11px;margin-top:20px;color:#84a399}
+    main{position:relative;min-width:0;background:#14242c;display:flex;align-items:stretch;justify-content:stretch}
+    #stage{display:block;width:100%;height:100dvh;touch-action:none}
+    .badge{position:absolute;top:20px;left:20px;padding:8px 12px;border-radius:999px;border:1px solid #b4d5bc44;background:#0c202aba;color:#d8ecd9;font-size:10px;font-weight:900;letter-spacing:.14em;pointer-events:none}
+    .tip{position:absolute;bottom:18px;right:18px;color:#d2e5ddaa;font-size:11px;pointer-events:none;text-align:right}
+    [hidden]{display:none!important}
+    @media(max-width:760px){.layout{grid-template-columns:1fr}aside{padding:20px}.kicker{margin-top:20px}.group{margin-top:15px}#stage{height:55dvh;min-height:360px}main{order:-1}.badge{top:12px;left:12px}.tip{bottom:9px;right:9px}}
+  </style>
 </head>
-<body><div class="layout">
-<aside><a href="./index.html">← VOLTAR AO JOGO</a> &nbsp; <a href="./warrior-compare.html">◇ COMPARAR COM O MODELO B ↗</a>
-<div class="kicker">✦ ATELIÊ DE ARTE PROCEDURAL</div>
-<h1>O <span>Guerreiro</span><br>do Éter</h1>
-<p>Rosto, armadura articulada, capa, escudo heráldico e espada rúnica. Modelo tridimensional gerado por JavaScript, com proporções esguias, armadura leve e articulações independentes. Aparência ilustrada por toon shading, câmera ortográfica e movimento real em 360°.</p>
-<hr>
-<div class="control"><label>ANIMAÇÃO</label>
-<div class="choices"><button class="active" data-motion="idle">Parado</button><button data-motion="walk">Andando</button><button data-motion="attack">Ataque</button></div></div>
-<div class="control"><label for="view">PERSPECTIVA</label>
-<select id="view"><option value="front">Frente</option><option value="front-right">Frente-direita</option><option value="right">Direita</option>
-<option value="back-right">Trás-direita</option><option value="back">Costas</option>
-<option value="back-left">Trás-esquerda</option><option value="left">Esquerda</option>
-<option value="front-left">Frente-esquerda</option><option value="free">Giro livre (arrastar)</option></select></div>
-<div class="control"><label for="zoom">ZOOM <output id="zoom-label">1.1×</output></label>
-<input type="range" id="zoom" min=".5" max="2.3" step=".1" value="1.1"></div>
-<div class="control"><label for="armor">ARMADURA</label>
-<select id="armor"><option value="light">Leve — proteção discreta</option>
-<option value="cloth">Apenas roupa e couro</option></select></div>
-<div class="control"><label for="background">CENÁRIO</label><select id="background"><option value="world">Santuário procedural</option><option value="dark">Estúdio escuro</option><option value="light">Estúdio claro</option></select></div>
-<div class="control"><div class="choices"><button data-gear="full" class="active">Equipado</button><button data-gear="unarmed">Sem espada</button><button id="freeze">Ⅱ Pausar</button></div></div>
-<hr><button class="primary" id="export">✧ EXPORTAR PNG COM ALPHA</button>
-<button class="primary secondary" id="reset">RESTAURAR VISUALIZAÇÃO</button>
-<div class="hint">Arraste o personagem para girar livremente. A espada e o escudo acompanham as mãos. A imagem exportada é opcional; a cena original é 3D procedurally gerada em <strong>src/render/three/WarriorModel.js</strong>.</div>
-</aside><main><canvas id="stage" aria-label="Cenário procedural do ateliê"></canvas><canvas id="hero-3d" aria-label="Guerreiro tridimensional interativo" hidden></canvas>
-<div class="tags"><span>3D PROCEDURAL</span><span id="studio-status">CARREGANDO WEBGL</span></div>
-<div class="caption">Sentinela de Éter<small>3D ORTOGRÁFICO · ANIMAÇÃO ESQUELÉTICA</small></div>
-</main></div>
-<script type="module" src="./src/studio/WarriorStudio.js"></script></body></html>
+<body>
+<div class="layout">
+  <aside>
+    <a href="./index.html">← VOLTAR AO JOGO</a>
+    <div class="kicker">✦ Ferramentas de arte procedural</div>
+    <h1>Ateliê de <span>Personagens 2D</span></h1>
+    <p>O mesmo desenho vetorial usado no jogo. Todos os traços, sombras e movimentos são feitos por código, diretamente no Canvas 2D.</p>
+    <div class="group"><label>Personagem</label><div class="choices" role="group" aria-label="Personagem">
+      <button type="button" data-class="guardian" class="active">Guerreiro</button>
+      <button type="button" data-class="mage">Arcanista</button>
+      <button type="button" data-class="ranger">Andarilho</button>
+    </div></div>
+    <div class="group"><label>Movimento</label><div class="choices" role="group" aria-label="Animação">
+      <button type="button" data-motion="idle" class="active">Parado</button>
+      <button type="button" data-motion="walk">Caminhar</button>
+      <button type="button" data-motion="attack">Ataque</button>
+    </div></div>
+    <div class="group"><label for="direction">Direção</label><select id="direction">
+      <option value="front">Frente</option><option value="back">Costas</option>
+      <option value="left">Esquerda</option><option value="right">Direita</option>
+    </select></div>
+    <div class="group"><label for="equipment">Equipamento do Guerreiro</label><select id="equipment">
+      <option value="full">Com espada</option><option value="unarmed">Sem espada</option>
+    </select></div>
+    <div class="group"><label for="background">Cenário</label><select id="background">
+      <option value="world">Floresta do jogo</option><option value="dark">Estúdio escuro</option>
+      <option value="light">Estúdio claro</option><option value="transparent">Transparente</option>
+    </select></div>
+    <div class="group"><div class="row"><label for="zoom">Zoom</label><output id="zoom-value" for="zoom">1.0×</output></div>
+      <input id="zoom" type="range" min=".5" max="2.5" value="1" step=".1"></div>
+    <button id="pause" class="secondary" type="button">Ⅱ Pausar animação</button>
+    <button id="export" class="primary" type="button">↓ EXPORTAR PERSONAGEM EM PNG</button>
+    <p class="note">A exportação é feita em um Canvas separado, com fundo transparente. Não utiliza imagens, modelos ou recursos externos.</p>
+  </aside>
+  <main>
+    <canvas id="stage" aria-label="Prévia do personagem desenhado em Canvas 2D"></canvas>
+    <div class="badge">CANVAS 2D · 100% CÓDIGO</div>
+    <div class="tip">Prévia do personagem em tempo real</div>
+  </main>
+</div>
+<script type="module" src="./src/studio/WarriorStudio.js"></script>
+</body>
+</html>
