@@ -31,8 +31,9 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
 .workspace{background:#10232a;min-width:0;display:flex;flex-direction:column;position:relative;align-self:start}
 .stage-header{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #36524b80}
 #actor-title{font-size:17px;font-weight:850}#actor-id{font:11px ui-monospace,monospace;color:#e2c48d}
-#stage{width:100%;height:clamp(320px,62dvh,750px);display:block;cursor:crosshair;touch-action:none}
-.stage-note{position:absolute;top:68px;left:18px;color:#c8e6da;font-size:11px;pointer-events:none;background:#1128329c;border:1px solid #73958144;border-radius:30px;padding:5px 11px}
+#stage{width:100%;height:clamp(320px,58dvh,680px);display:block;cursor:crosshair;touch-action:none}
+[hidden]{display:none!important}
+#reference-toggle{width:100%;margin-top:11px;background:#1f3944;border:1px solid #52737a;color:#c6ddd3;text-align:left}
 .timeline{margin-top:0;padding:18px;background:#13252f;border-top:1px solid #36524b}
 .timeline-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .timeline-head strong{color:#e8c891}.timeline-head small{color:#a2bbb0}
@@ -76,7 +77,7 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
 #json-file::file-selector-button{background:#25424c;color:#d4ebdd;border:1px solid #567479;padding:8px;margin-right:8px;border-radius:7px}
 @media(max-width:1100px){main{grid-template-columns:230px minmax(300px,1fr)245px}aside{padding:12px}header{padding:0 14px}}
 @media(max-width:850px){main{grid-template-columns:1fr}.workspace{order:-1}.left,.right{border:0;border-top:1px solid #36524b}.right{display:grid;grid-template-columns:1fr 1fr;gap:15px}.right section{min-width:0}#stage{height:50dvh;min-height:320px}header small{display:none}}
-@media(max-width:480px){.right{display:block}header h1{font-size:18px}.stage-note{font-size:9px}#stage{height:370px}}
+@media(max-width:480px){.right{display:block}header h1{font-size:18px}#stage{height:370px}}
 </style>
 </head>
 <body>
@@ -111,6 +112,7 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
       <label for="background">Fundo</label><select id="background"><option value="dark">Estúdio escuro</option><option value="light">Estúdio claro</option><option value="transparent">Transparência (xadrez)</option><option value="world">Floresta do jogo</option></select>
       <label for="zoom">Zoom · <output id="zoom-label">2.6×</output></label><input type="range" id="zoom" min="1.5" max="5" step=".1" value="2.6">
       <label for="show-handles"><input type="checkbox" id="show-handles" checked> Mostrar articulações na tela</label>
+      <button id="reference-toggle" type="button" aria-controls="walk-reference" aria-expanded="false">▦ Mostrar poses de referência</button>
     </section>
     <section>
       <h2>04 · Arquivos</h2>
@@ -131,7 +133,7 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
       <span class="hint">Amarelo: alça de rotação · Ponto: pivô</span>
     </div>
     <canvas id="stage" aria-label="Editor e prévia do personagem Canvas 2D com articulações arrastáveis"></canvas>
-    <span class="stage-note">Selecione o ponto de uma peça e arraste para GIRAR · Arraste a alça amarela para rotação precisa</span>
+
     <div class="timeline">
       <div class="timeline-head"><strong id="clip-title">idle</strong><small id="time-label">0.00 / 1.20 s</small></div>
       <input type="range" id="scrub" min="0" max="1.2" step=".01" value="0" aria-label="Tempo da animação">
@@ -144,13 +146,13 @@ button:hover{background:#305361;border-color:#89afa0}button.primary{background:#
     </div>
   </div>
   <aside class="right">
-    <section id="walk-reference">
+    <section id="walk-reference" hidden>
       <h2>↟ Referência de caminhada · 4 direções</h2>
       <p class="muted">✓ Poses aprovadas: <b>4 quadros por direção</b> (2 contatos + 2 passagens). Disponíveis como clipes padrão para os cinco personagens bípedes.</p>
       <div id="reference-grid" aria-label="Dezesseis quadros de caminhada: quatro em cada direção"></div>
       <p id="reference-caption" aria-live="polite">01 · Contato esquerdo</p>
       <div class="reference-controls">
-        <label for="reference-overlay"><input type="checkbox" id="reference-overlay" checked> Sobrepor esqueleto no personagem</label>
+        <label for="reference-overlay"><input type="checkbox" id="reference-overlay"> Sobrepor esqueleto no personagem</label>
         <label for="reference-opacity">Opacidade do guia · <output id="reference-opacity-label">55%</output></label>
         <input type="range" id="reference-opacity" min=".1" max="1" step=".05" value=".55">
         <button type="button" id="reference-apply">↺ Restaurar poses aprovadas desta direção</button>
