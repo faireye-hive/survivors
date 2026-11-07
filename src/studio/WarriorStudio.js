@@ -12,7 +12,7 @@ const canvas=$('stage'),ctx=canvas.getContext('2d');
 if(!ctx)throw Error('Canvas 2D indisponível');
 const world=new World(173);
 let project=readRigProject();
-const state={characterId:project.characters[0].id,clipId:'idle',selected:'head',time:0,
+const state={characterId:project.characters[0].id,clipId:'walk.front',selected:'head',time:0,
   playing:true,background:'dark',face:'front',zoom:2.6,handles:true,tool:'rotate',
   referenceFrame:0,referenceOverlay:true,referenceOpacity:.55};
 let width=1,height=1,dpr=1,last=0,dragging=null,refreshAt=0;
@@ -185,8 +185,14 @@ function refreshReferenceUI(){
     button.classList.toggle('active',active);
     button.setAttribute('aria-pressed',String(active));
   }
+  const exists=character().clips.some(c=>c.id===walkGuideClipId(state.face));
+  $('reference-apply').textContent=exists
+    ?'↺ Restaurar poses aprovadas desta direção'
+    :'＋ Instalar poses aprovadas desta direção';
   $('reference-help').textContent=biped
-    ?'Cria walk.'+state.face+' com 4 poses e 1 quadro de fechamento para loop suave. Outros clipes ficam intactos.'
+    ?exists
+      ?'Poses aprovadas já disponíveis em walk.'+state.face+'. Use o seletor de clipes para editá-las; restaurar solicita confirmação.'
+      :'Instale o conjunto aprovado com 4 passos e fechamento suave. Outros clipes ficam intactos.'
     :'Referência humana para observação. Esta espécie não tem quatro membros para aplicar a caminhada.';
 }
 function selectReference(direction,frame,activateClip=true){

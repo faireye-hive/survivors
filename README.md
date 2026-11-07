@@ -108,3 +108,24 @@ Para a caminhada suave tradicional, considere oito poses no ciclo
 completo (contato, baixa, passagem e alta em cada passo).
 Aqui a variante compacta de **quatro quadros** usa dois contatos e
 duas passagens, adequada à prévia do jogo.
+
+### Poses aprovadas como padrão (arquivo do usuário, 07/11/2026)
+
+O projeto JSON enviado contém oito personagens; para os cinco bípedes
+(Guerreiro, Arcanista, Andarilho, Esqueleto e Colosso) inclui
+`walk.front`, `walk.back`, `walk.left` e `walk.right`, cada uma
+com quatro poses em `0`, `0.2`, `0.4` e `0.6` segundos e o
+quinto quadro de fechamento em `0.8` segundos. Todas as 100 poses
+foram comparadas à fórmula existente e coincidiam exatamente.
+
+`WalkPoseData.js` guarda essa sequência aprovada como fonte única, sem
+modificar rotações ou tempos. Agora `newCharacter` fornece os quatro
+clipes direcionais desde a primeira visita; o jogo os executa em cada
+direção sem instalação manual. Para projetos antigos no
+`localStorage`, `readRigProject` complementa uma única vez somente
+clipes ausentes dos personagens padrão, sem sobrescrever poses já
+editadas, nomes, cores ou personagens personalizados. Restaurar um
+clipe pelo editor continua exigindo confirmação.
+
+Slime, Morcego e Espectro mantêm suas animações próprias sem membros
+humanos ou clipes direcionais bípedes.

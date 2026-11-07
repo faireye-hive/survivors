@@ -52,8 +52,9 @@ test('guia disponibiliza quatro quadros por direção, com o fechamento correto'
 test('cada direção tem sua própria animação e exporta JSON compatível',()=>{
   const hero=newCharacter('hero.guardian');
   const original=structuredClone(hero.clips.find(c=>c.id==='walk'));
-  for(const direction of WALK_DIRECTIONS)hero.clips.push(createDirectionalWalkClip(direction));
+  // Approved directional clips are now bundled by default.
   assert.equal(hero.clips.length,8);
+  assert.equal(new Set(hero.clips.map(c=>c.id)).size,8);
   for(const direction of WALK_DIRECTIONS){
     assert.equal(resolveWalkAction(hero,'walk',direction),'walk.'+direction);
     assert.equal(resolveWalkAction(hero,'attack',direction),'attack');
@@ -65,6 +66,7 @@ test('cada direção tem sua própria animação e exporta JSON compatível',()=
   assert.deepEqual(result.characters[0].clips.find(c=>c.id==='walk.right').frames[4].pose,
     result.characters[0].clips.find(c=>c.id==='walk.right').frames[0].pose);
   const bare=newCharacter('hero.mage');
+  bare.clips=bare.clips.filter(c=>!c.id.startsWith('walk.'));
   assert.equal(resolveWalkAction(bare,'walk','left'),'walk');
 });
 
@@ -89,7 +91,6 @@ test('dezesseis esqueletos de referência renderizam em Canvas 2D isolado',()=>{
 
 test('jogo escolhe o clip direcional, sem modificar a pose base walk',()=>{
   const hero=newCharacter('hero.guardian');
-  hero.clips.push(createDirectionalWalkClip('right'));
   const {c,stats}=fakeCanvas();
   const actual=drawRigActor(c,{classId:'guardian',vx:130,vy:0,inv:0},0,0,0,
     {character:hero,action:'walk',face:'right',time:0,shadow:false});
