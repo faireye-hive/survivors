@@ -129,3 +129,15 @@ clipe pelo editor continua exigindo confirmação.
 
 Slime, Morcego e Espectro mantêm suas animações próprias sem membros
 humanos ou clipes direcionais bípedes.
+
+### Rig Studio: enquadramento compacto e referências recolhidas
+
+A prévia Canvas usa o enquadramento `StageViewport.js` para manter
+o personagem logo acima da linha do tempo (14px de margem inferior)
+em vez de deixá-lo em 79% da altura. O zoom é reduzido automaticamente
+quando necessário para não cortar a cabeça no mobile; a transformação
+é idêntica no renderizador e na seleção de pivôs por mouse/toque.
+O painel de referências fica recolhido por padrão e pode ser reaberto
+na seção **Visualização**. Fechá-lo também desativa sua sobreposição
+fantasma, evitando poluição visual. O salvamento de poses, os JSONs
+e as animações aprovadas permanecem inalterados.
