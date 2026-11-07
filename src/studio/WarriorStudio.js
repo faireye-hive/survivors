@@ -1,7 +1,8 @@
 import { World } from '../world/World.js';
 import {drawRigActor, getRigHandles} from '../render/characters/RigRenderer.js';
 import {NODES,RIG_IDS,RIG_PRESETS,RIG_SCHEMA,RIG_VERSION,createFrame,findClip,newCharacter,
-  newRigProject,readRigProject,sampleCharacter,storeRigProject,validateRigProject} from '../data/Rig2D.js';
+  newRigProject,readRigProject,sampleCharacter,storeRigProject,validateRigProject,
+  visibleRigNodes,rigOffsetRange,boundedRigValue,rigNodeDefinition,rigShape} from '../data/Rig2D.js';
 
 const $=id=>document.getElementById(id);
 const canvas=$('stage'),ctx=canvas.getContext('2d');
@@ -9,7 +10,7 @@ if(!ctx)throw Error('Canvas 2D indisponível');
 const world=new World(173);
 let project=readRigProject();
 const state={characterId:project.characters[0].id,clipId:'idle',selected:'head',time:0,
-  playing:true,background:'dark',face:'front',zoom:2.6,handles:true};
+  playing:true,background:'dark',face:'front',zoom:2.6,handles:true,tool:'rotate'};
 let width=1,height=1,dpr=1,last=0,dragging=null,refreshAt=0;
 const paletteNames={primary:'Principal',secondary:'Secundária',accent:'Detalhes',
   skin:'Pele/rosto',outline:'Contorno',eyes:'Olhos',metal:'Metal'};
@@ -51,17 +52,28 @@ function refreshClips(){
   state.time=clamp(state.time,0,clip().duration);
   $('scrub').max=clip().duration;
 }
+const monsterLabels={
+  slime:{body:'Corpo gelatinoso',head:'Rosto (no corpo)'},
+  bat:{body:'Tronco de morcego',armL:'Asa esquerda',armR:'Asa direita'},
+  wraith:{body:'Manto espectral',armL:'Névoa esquerda',armR:'Névoa direita'},
+  colossus:{body:'Núcleo de pedra',legL:'Base esquerda',legR:'Base direita'}
+};
+function partLabel(id){
+  return monsterLabels[rigShape(character())]?.[id]||NODES[id].label;
+}
 function refreshParts(){
   const box=$('part-list');box.replaceChildren();
-  for(const [id,node] of Object.entries(NODES)){
+  const nodes=visibleRigNodes(character());
+  if(!nodes.includes(state.selected))state.selected=nodes.includes('head')?'head':nodes[0];
+  for(const id of nodes){
     const button=document.createElement('button');
     button.type='button';button.dataset.part=id;
-    button.textContent=node.label;
+    button.textContent=partLabel(id);
     button.classList.toggle('active',id===state.selected);
     button.addEventListener('click',()=>selectPart(id));
     box.append(button);
   }
-  $('part-title').textContent='06 · '+NODES[state.selected].label;
+  $('part-title').textContent='06 · '+partLabel(state.selected);
 }
 function refreshColors(){
   const box=$('colors');box.replaceChildren();
@@ -93,10 +105,21 @@ function ensureFrame(){
 function pause(){state.playing=false;$('play').textContent='▶ Reproduzir';}
 function refreshInspector(){
   const pose=currentPose(),part=pose[state.selected]||{};
-  $('part-x').value=round(part.x||0);
-  $('part-y').value=round(part.y||0);
-  $('part-rotation').value=round(part.rotation||0);
+  for(const key of ['x','y']){
+    const [lo,hi]=rigOffsetRange(state.selected,key);
+    const field=$('part-'+key);
+    field.min=lo;field.max=hi;field.disabled=lo===hi;
+    field.value=round(boundedRigValue(state.selected,key,part[key]||0));
+  }
+  const angle=round(part.rotation||0);
+  $('part-rotation').value=angle;
+  $('rotation-dial').value=angle;
+  $('rotation-value').textContent=angle+'°';
   $('part-scale').value=round(part.scale??1);
+  const moveable=rigOffsetRange(state.selected,'x')[1]>0;
+  $('rig-lock-hint').textContent=moveable
+    ?'Posição limitada ao encaixe; girar mantém as peças conectadas.'
+    :'Pivô fixo: use a rotação para mover a peça sem desencaixar.';
 }
 function refreshTimeline(){
   $('scrub').value=state.time;
@@ -129,13 +152,26 @@ function setPartValue(key,value){
   pause();
   try{
     const frame=ensureFrame();frame.pose[state.selected]||={};
-    frame.pose[state.selected][key]=round(clamp(value,...ranges[key]));
-    save();refreshTimeline();
+    frame.pose[state.selected][key]=round(boundedRigValue(state.selected,key,clamp(value,...ranges[key])));
+    save();refreshInspector();refreshTimeline();
   }catch(e){message(e.message,true);}
 }
 for(const key of ['x','y','rotation','scale']){
   $('part-'+key).addEventListener('change',event=>setPartValue(key,Number(event.target.value)));
 }
+$('rotation-dial').addEventListener('input',event=>{
+  setPartValue('rotation',Number(event.target.value));
+});
+function setTool(tool){
+  state.tool=tool;
+  $('tool-rotate').classList.toggle('primary',tool==='rotate');
+  $('tool-move').classList.toggle('primary',tool==='move');
+  $('tool-rotate').setAttribute('aria-pressed',String(tool==='rotate'));
+  $('tool-move').setAttribute('aria-pressed',String(tool==='move'));
+}
+$('tool-rotate').addEventListener('click',()=>setTool('rotate'));
+$('tool-move').addEventListener('click',()=>setTool('move'));
+
 $('character').addEventListener('change',event=>{
   state.characterId=event.target.value;state.clipId='idle';state.time=0;
   refreshAll();
@@ -281,43 +317,98 @@ function paint(now){
 function pointerToRig(event){
   const r=canvas.getBoundingClientRect();
   const signed=state.face==='left'?-1:1;
-  const size=state.zoom*2.2*(character().template==='monster.colossus'?.61:1);
+  const size=state.zoom*2.2*(character().template==='monster.colossus'?.61*1.65:1);
   return {x:((event.clientX-r.left)-width/2)/size*signed,
     y:((event.clientY-r.top)-height*.79)/size};
 }
+// Selected bone has an arc and an amber rotation knob. Drag the knob for
+// angular rotation; dragging the central joint uses a stable degree-per-pixel
+// gesture so touching a pivot never causes a sudden jump or disassembly.
+const TAU=Math.PI*2;
+function rotationKnob(j){
+  return {x:j.x+Math.cos(j.rotation-Math.PI/2)*15,
+    y:j.y+Math.sin(j.rotation-Math.PI/2)*15};
+}
+function angleBetween(from,to){
+  return Math.atan2(to.y-from.y,to.x-from.x);
+}
+function shortestAngle(delta){
+  return Math.atan2(Math.sin(delta),Math.cos(delta));
+}
 canvas.addEventListener('pointerdown',event=>{
-  const point=pointerToRig(event),handles=getRigHandles(currentPose());
-  let selected=null,distance=Infinity;
-  for(const [id,j] of Object.entries(handles)){
-    const d=Math.hypot(point.x-j.x,point.y-j.y);
-    if(d<distance){distance=d;selected=id;}
+  if(event.button!==0&&event.pointerType==='mouse')return;
+  const point=pointerToRig(event),handles=getRigHandles(currentPose(),character());
+  let selected=null,dragKind='pivot',distance=Infinity;
+  const highlighted=handles[state.selected];
+  if(highlighted){
+    const knob=rotationKnob(highlighted);
+    if(Math.hypot(point.x-knob.x,point.y-knob.y)<7){
+      selected=state.selected;dragKind='knob';
+    }
   }
-  if(distance>12)return;
+  if(!selected){
+    for(const [id,j] of Object.entries(handles)){
+      const d=Math.hypot(point.x-j.x,point.y-j.y);
+      if(d<distance){distance=d;selected=id;}
+    }
+  }
+  if(!selected||(dragKind==='pivot'&&distance>10))return;
   selectPart(selected);pause();
-  try{ensureFrame();dragging=event.pointerId;canvas.setPointerCapture(event.pointerId);}
-  catch(e){message(e.message,true);}
+  try{
+    ensureFrame();
+    const startJoint=getRigHandles(currentPose(),character())[selected];
+    const initial=activeFrame().pose[selected]?.rotation||0;
+    const moveable=rigOffsetRange(selected,'x')[1]>0;
+    const mode=dragKind==='knob'||state.tool==='rotate'||!moveable?'rotate':'move';
+    dragging={id:event.pointerId,selected,mode,dragKind,
+      initial,startPointer:point,pivot:startJoint,
+      lastPointer:point,original:structuredClone(activeFrame().pose[selected]||{}),
+      angle:angleBetween(startJoint,point)};
+    canvas.setPointerCapture(event.pointerId);
+  }catch(e){message(e.message,true);}
 });
 canvas.addEventListener('pointermove',event=>{
-  if(dragging!==event.pointerId)return;
-  const point=pointerToRig(event),part=NODES[state.selected],pose=currentPose();
-  const joints=getRigHandles(pose);
-  const parent=part.parent?joints[part.parent]:{x:0,y:0,rotation:0,scale:1};
-  const x=point.x-parent.x,y=point.y-parent.y,cs=Math.cos(parent.rotation),sn=Math.sin(parent.rotation);
-  const nx=(x*cs+y*sn)/parent.scale-part.x;
-  const ny=(-x*sn+y*cs)/parent.scale-part.y;
+  if(!dragging||dragging.id!==event.pointerId)return;
+  const d=dragging,point=pointerToRig(event);
   const frame=activeFrame();if(!frame)return;
-  frame.pose[state.selected]||={};
-  frame.pose[state.selected].x=round(clamp(nx,-90,90),.5);
-  frame.pose[state.selected].y=round(clamp(ny,-90,90),.5);
+  frame.pose[d.selected]||={};
+  const joint=frame.pose[d.selected];
+  if(d.mode==='rotate'){
+    let degrees;
+    if(d.dragKind==='knob'){
+      const delta=shortestAngle(angleBetween(d.pivot,point)-d.angle);
+      degrees=d.initial+delta*180/Math.PI;
+    }else{
+      const size=state.zoom*2.2;
+      const signed=state.face==='left'?-1:1;
+      degrees=d.initial+(point.x-d.startPointer.x)*size*.48*signed
+        -(point.y-d.startPointer.y)*size*.18;
+    }
+    joint.rotation=round(boundedRigValue(d.selected,'rotation',degrees),.5);
+  }else{
+    // Positional edits are only permitted for the root, head/face and facial
+    // features. Connected limbs never move their joint origins off the skeleton.
+    const node=rigNodeDefinition(d.selected,character());
+    const joints=getRigHandles(currentPose(),character());
+    const parent=node.parent?joints[node.parent]:{x:0,y:0,rotation:0,scale:1};
+    const x=point.x-parent.x,y=point.y-parent.y,cs=Math.cos(parent.rotation),sn=Math.sin(parent.rotation);
+    const nx=(x*cs+y*sn)/parent.scale-node.x;
+    const ny=(-x*sn+y*cs)/parent.scale-node.y;
+    joint.x=round(boundedRigValue(d.selected,'x',nx),.25);
+    joint.y=round(boundedRigValue(d.selected,'y',ny),.25);
+  }
+  d.lastPointer=point;
   refreshInspector();
 });
 function finishDrag(event){
-  if(dragging!==event.pointerId)return;
+  if(!dragging||dragging.id!==event.pointerId)return;
   dragging=null;save();refreshTimeline();
 }
 canvas.addEventListener('pointerup',finishDrag);
 canvas.addEventListener('pointercancel',finishDrag);
-canvas.addEventListener('lostpointercapture',()=>{if(dragging!==null){dragging=null;save();refreshTimeline();}});
+canvas.addEventListener('lostpointercapture',()=>{
+  if(dragging){dragging=null;save();refreshTimeline();}
+});
 function download(name,contents,mime){
   const blob=new Blob([contents],{type:mime});
   const url=URL.createObjectURL(blob),link=document.createElement('a');

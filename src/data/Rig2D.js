@@ -35,6 +35,61 @@ export const RIG_PRESETS=Object.freeze({
   'monster.colossus':P('Colosso','colossus',{primary:'#8d9b91',secondary:'#536f6c',accent:'#efc684',skin:'#b7a68b',outline:'#283d45',eyes:'#ffe4a1',metal:'#e0dbbf'}),
 });
 export const RIG_IDS=Object.freeze(Object.keys(RIG_PRESETS));
+// Only the anatomical parts that exist in each species can be edited or drawn.
+// The face pivot is hidden inside the slime's single body: not a second head.
+const HERO_NODES=Object.freeze([...NODE_ORDER]);
+export const RIG_ANATOMY=Object.freeze({
+  guardian:HERO_NODES,mage:HERO_NODES,ranger:HERO_NODES,
+  slime:Object.freeze(['body','head','eyeL','eyeR','mouth']),
+  bat:Object.freeze(['body','head','eyeL','eyeR','mouth','armL','armR']),
+  skeleton:Object.freeze(['body','head','eyeL','eyeR','mouth','armL','handL','armR','handR','legL','legR']),
+  wraith:Object.freeze(['body','head','eyeL','eyeR','armL','armR']),
+  colossus:Object.freeze(['body','head','eyeL','eyeR','mouth','armL','armR','legL','legR']),
+});
+const anatomyLayout={
+  slime:{body:{x:0,y:-13},head:{x:0,y:0},eyeL:{x:-6,y:-4},eyeR:{x:6,y:-4},mouth:{x:0,y:5}},
+  bat:{body:{x:0,y:-18},head:{x:0,y:-10},eyeL:{x:-5,y:-2},eyeR:{x:5,y:-2},
+    mouth:{x:0,y:6},armL:{x:-10,y:-5},armR:{x:10,y:-5}},
+  skeleton:{body:{x:0,y:-26},head:{x:0,y:-22},eyeL:{x:-5,y:-3},eyeR:{x:5,y:-3},
+    mouth:{x:0,y:8},armL:{x:-12,y:-10},armR:{x:12,y:-10},
+    legL:{x:-7,y:12},legR:{x:7,y:12}},
+  wraith:{body:{x:0,y:-23},head:{x:0,y:-14},eyeL:{x:-4,y:0},eyeR:{x:4,y:0},
+    armL:{x:-13,y:-6},armR:{x:13,y:-6}},
+  colossus:{body:{x:0,y:-31},head:{x:0,y:-24},eyeL:{x:-5,y:0},eyeR:{x:5,y:0},
+    mouth:{x:0,y:8},armL:{x:-19,y:-9},armR:{x:19,y:-9},
+    legL:{x:-12,y:12},legR:{x:12,y:12}},
+};
+export function rigShape(characterOrTemplate='hero.guardian'){
+  const template=typeof characterOrTemplate==='string'?characterOrTemplate:characterOrTemplate?.template;
+  return RIG_PRESETS[template]?.shape||'guardian';
+}
+export function visibleRigNodes(characterOrTemplate='hero.guardian'){
+  return RIG_ANATOMY[rigShape(characterOrTemplate)]||HERO_NODES;
+}
+export function rigNodeDefinition(id,characterOrTemplate='hero.guardian'){
+  const node=NODES[id];
+  if(!node)return null;
+  const override=anatomyLayout[rigShape(characterOrTemplate)]?.[id];
+  return override?{...node,...override}:node;
+}
+/** Offsets for connected bones stay locked; move their rotation, not their pivot.
+ * Independent facial features move only within their host head/face.
+ */
+export function rigOffsetRange(id,key){
+  if(key!=='x'&&key!=='y')return [-90,90];
+  if(id==='body')return [-90,90];
+  if(id==='head')return [-3,3];
+  if(id==='eyeL'||id==='eyeR')return [-4,4];
+  if(id==='mouth')return [-5,5];
+  return [0,0];
+}
+export function boundedRigValue(id,key,value){
+  if(key==='scale')return Math.max(.2,Math.min(3,value));
+  if(key==='rotation')return Math.max(-180,Math.min(180,value));
+  const [min,max]=rigOffsetRange(id,key);
+  return Math.max(min,Math.min(max,value));
+}
+
 const ACTIONS=['idle','walk','attack','hit'];
 const colorPattern=/^#[a-fA-F0-9]{6}$/;
 const idPattern=/^[a-z][a-z0-9._-]{0,39}$/;
@@ -124,7 +179,8 @@ export function validateRigProject(raw){
           for(const [key,value] of Object.entries(part)){
             if(!['x','y','rotation','scale'].includes(key))throw Error('Propriedade inválida: '+key);
             const ranges={x:[-90,90],y:[-90,90],rotation:[-180,180],scale:[.2,3]};
-            pose[node][key]=checkNumber(value,...ranges[key],node+'.'+key);
+            const checked=checkNumber(value,...ranges[key],node+'.'+key);
+            pose[node][key]=boundedRigValue(node,key,checked);
           }
         }
         frames.push({time,pose});
