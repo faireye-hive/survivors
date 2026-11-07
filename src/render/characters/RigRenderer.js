@@ -1,5 +1,5 @@
 import {NODES, RIG_PRESETS, RIG_IDS, newCharacter, readRigProject,
-  characterIdForActor, sampleCharacter} from '../data/Rig2D.js';
+  characterIdForActor, sampleCharacter, findClip} from '../../data/Rig2D.js';
 
 const TAU=Math.PI*2,DEG=Math.PI/180;
 const project=readRigProject();
@@ -190,7 +190,13 @@ export function drawRigActor(c,actor,x,y,time=0,options={}){
   const action=options.action||
     (actor?.hit>0?'hit':actor?.attackPose>0?'attack':
       Math.hypot(actor?.vx||0,actor?.vy||0)>4||actor?.type?'walk':'idle');
-  const phase=options.time??time+(actor?.id?actor.id*.09:0);
+  // Restart one-shot clips from the moment combat sets the attack/hit timer.
+  const phase=options.time??(
+    action==='attack'&&actor?.attackPose>0
+      ?(1-clamp(actor.attackPose/.27,0,1))*findClip(character,'attack').duration
+      :action==='hit'&&actor?.hit>0
+        ?(1-clamp(actor.hit/.12,0,1))*findClip(character,'hit').duration
+        :time+(actor?.id?actor.id*.09:0));
   const pose=options.pose||sampleCharacter(character,action,phase);
   const joints=getRigHandles(pose);
   const speed=Math.hypot(actor?.vx||0,actor?.vy||0);

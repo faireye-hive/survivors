@@ -243,7 +243,8 @@ function drawBackdrop(c,w,h){
 }
 function drawPose(c,w,h,t,zoom,handles=false){
   const selected=character(),pose=sampleCharacter(selected,clip().id,t);
-  c.save();c.translate(w/2,h*.79);c.scale(zoom,zoom);
+  const effectiveZoom=selected.template==='monster.colossus'?zoom*.61:zoom;
+  c.save();c.translate(w/2,h*.79);c.scale(effectiveZoom,effectiveZoom);
   drawRigActor(c,{},0,0,t,{
     id:selected.id,character:selected,pose,face:state.face,
     shadow:!handles,showHandles:handles&&state.handles,selected:state.selected
@@ -280,7 +281,7 @@ function paint(now){
 function pointerToRig(event){
   const r=canvas.getBoundingClientRect();
   const signed=state.face==='left'?-1:1;
-  const size=state.zoom*2.2;
+  const size=state.zoom*2.2*(character().template==='monster.colossus'?.61:1);
   return {x:((event.clientX-r.left)-width/2)/size*signed,
     y:((event.clientY-r.top)-height*.79)/size};
 }
