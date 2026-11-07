@@ -3,30 +3,64 @@
 ## Tecnologias
 
 - JavaScript ES Modules e Vite para desenvolvimento e publicação.
-- Canvas 2D para o mundo, personagens, efeitos e minimapa.
-- HTML e CSS para a interface; Web Audio para sons sintetizados.
-- Sem recursos externos de personagens ou bibliotecas de renderização 3D.
+- Canvas 2D para o cenário, personagens, monstros, efeitos e minimapa.
+- HTML/CSS para interface e Web Audio para sons sintetizados.
+- Sem bibliotecas gráficas 3D, modelos externos ou spritesheets.
 
-## Fluxo de um frame
+## Fluxo de jogo
 
-Game.step(dt) atualiza movimento, combate, inimigos, progressão, efeitos e interface. Renderer.render(game) desenha um quadro com o contexto game.ctx (CanvasRenderingContext2D). A câmera acompanha o jogador. World.draw desenha o terreno; Renderer ordena inimigos e jogador por Y para uma sobreposição coerente; Art.js desenha projéteis, efeitos, partículas e textos de dano.
+`Game.step(dt)` calcula movimento, inimigos, combate, progressão e efeitos.
+`Renderer.render(game)` desenha o mundo e os atores por profundidade Y usando
+um único `CanvasRenderingContext2D`. O jogador fica no centro da câmera.
+A interface e o minimapa são atualizados em módulos independentes.
 
-O ciclo usa requestAnimationFrame e limita delta time para evitar saltos longos ao retornar à aba. A resolução física respeita devicePixelRatio até 2.
+## Rig procedural 2D compartilhado
 
-## Personagens
+`src/data/Rig2D.js` define `RIG_SCHEMA`, versão 1, templates de
+`hero.guardian`, `hero.mage`, `hero.ranger`, `monster.slime`, `monster.bat`,
+`monster.skeleton`, `monster.wraith` e `monster.colossus`.
 
-- Art.drawPlayer é o ponto de entrada para todas as classes.
-- Guerreiro: src/render/characters/Warrior.js, usando formas vetoriais, curvas, gradientes e poses frontais ou traseiras.
-- Arcanista e Andarilho: src/render/Art.js, sem imagens nem texturas.
-- A escala de exibição mantém os personagens compatíveis com os inimigos e com as colisões.
-- O ateliê em warrior-studio.html reaproveita Art.drawPlayer, não duplica os desenhos e exporta em PNG transparente.
+Cada personagem possui `id`, `template`, `name`, `colors` e `clips`.
+Cada animação contém `id`, `duration`, `loop` e
+`frames: [{time,pose}]`; cada pose é um mapa de peças para
+`{x,y,rotation,scale}`. As transformações são relativas ao pai, com pivôs
+no tronco, cabeça, olhos, boca, braços, mãos, pernas, pés e arma.
+Os keyframes são interpolados; a rotação usa o arco angular mais curto.
 
-Para incluir novas classes, adicione suas informações em src/data/classes.js e implemente o desenho associado em src/render/characters/ ou Art.js. As funções devem sempre usar save/restore para não afetar o contexto do próximo ator.
+`src/render/characters/RigRenderer.js` desenha todos os personagens e
+monstros usando esse mesmo sistema. `src/render/Art.js` delega
+`drawPlayer` e `drawEnemy` ao renderizador compartilhado, preservando
+as rotinas de itens, projéteis e efeitos especiais.
 
-## Limites e desempenho
+O Guerreiro foi redesenhado no mesmo estilo compacto ilustrado dos demais
+heróis. O código detalhado antigo foi removido, evitando dois sistemas
+separados de aparência e animação.
 
-Use culling por viewport (já aplicado aos inimigos e itens), mantenha o mesmo canvas de jogo, evite criação de caches gigantes por frame e adicione testes com node:test ao modificar sistemas. O ateliê possui canvas próprio apenas por ser uma página independente.
+## Rig Studio 2D
 
-## Desenvolvimento
+`warrior-studio.html` e `src/studio/WarriorStudio.js` implementam um
+editor de personagens Canvas 2D com preview em tempo real, seleção e
+arraste das articulações, inspetor de propriedades, editor de cores,
+keyframes, linha do tempo, reprodução, importação/exportação JSON e PNG.
 
-Execute npm test e npm run build antes de publicar. O workflow de CI roda em pull requests; o workflow Pages faz o deploy da main.
+A biblioteca de poses é gravada em `localStorage` usando
+`cronicas.2d.rigs.v1` e carregada no início do jogo. O editor pode exportar
+um personagem isolado ou o projeto completo, ambos no formato
+`cronicas-do-eter/rig2d`, versão 1. Os arquivos importados são validados:
+IDs, templates, cores, clipes, duração e números das transformações possuem
+limites. Importar um personagem de ID existente substitui o registro
+daquele ID no projeto local.
+
+A integração de uma animação personalizada ao jogo ocorre automaticamente
+na próxima recarga da página (mesma origem do navegador) quando o clipe
+se chama `idle`, `walk`, `attack` ou `hit`. Clipes com outros nomes são
+disponibilizados no editor e precisam de um gatilho de gameplay para ser
+reproduzidos durante a partida.
+
+## Desempenho
+
+Canvas 2D, culling de atores fora da tela, nenhuma textura externa e
+atualizações do jogo via `requestAnimationFrame`. Futuras melhorias:
+cache de poses de multidões e spatial hash de colisões.
+
+Execute `npm test` e `npm run build` antes da publicação no GitHub Pages.
