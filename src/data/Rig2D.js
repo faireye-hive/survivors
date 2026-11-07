@@ -6,6 +6,13 @@
 export const RIG_SCHEMA='cronicas-do-eter/rig2d';
 export const RIG_VERSION=1;
 export const RIG_STORAGE='cronicas.2d.rigs.v1';
+import {WALK_DIRECTIONS,createDirectionalWalkClip} from './WalkPoseData.js';
+/** Exact biped character set supplied in the approved rig2d export. */
+export const APPROVED_WALK_TEMPLATES=Object.freeze([
+  'hero.guardian','hero.mage','hero.ranger','monster.skeleton','monster.colossus'
+]);
+export const APPROVED_WALK_MIGRATION='cronicas.2d.rigs.approved-walks-20261107';
+
 export const NODE_ORDER=['body','head','eyeL','eyeR','mouth','armL','handL','armR','handR','legL','footL','legR','footR','weapon'];
 export const NODES=Object.freeze({
   body:{parent:null,x:0,y:-25,label:'Tronco'},
@@ -97,7 +104,7 @@ const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 export const createFrame=(time,pose={})=>({time,pose:structuredClone(pose)});
 export function createClips(template){
   const bat=template==='monster.bat',slime=template==='monster.slime';
-  return [
+  const clips=[
     {id:'idle',duration:1.2,loop:true,frames:[
       createFrame(0,{body:{y:0},eyeL:{scale:1},eyeR:{scale:1}}),
       createFrame(.6,{body:{y:-1.8},head:{rotation:2},eyeL:{scale:.8},eyeR:{scale:.8}}),
@@ -119,6 +126,12 @@ export function createClips(template){
       createFrame(.16,{head:{rotation:13},body:{rotation:-9},eyeL:{scale:.7},eyeR:{scale:.7}}),
       createFrame(.4,{})]},
   ];
+  // The approved export contains four directional 0.8s walk cycles for
+  // these five biped species only. Keep slime/bat/wraith anatomy untouched.
+  if(APPROVED_WALK_TEMPLATES.includes(template)){
+    clips.push(...WALK_DIRECTIONS.map(direction=>createDirectionalWalkClip(direction)));
+  }
+  return clips;
 }
 export function newCharacter(template,id=template,name){
   if(!RIG_PRESETS[template])throw Error('Modelo desconhecido');
@@ -191,10 +204,43 @@ export function validateRigProject(raw){
   }
   return project;
 }
+/**
+ * One-time, additive upgrade for already saved editor projects. Never alter
+ * an existing walk.front/back/left/right clip or a custom character. The
+ * migration marker prevents deleted custom clips being restored repeatedly.
+ */
+export function upgradeApprovedWalks(project){
+  let changed=false;
+  for(const character of project.characters){
+    if(character.id!==character.template||
+      !APPROVED_WALK_TEMPLATES.includes(character.template))continue;
+    const existing=new Set(character.clips.map(c=>c.id));
+    for(const direction of WALK_DIRECTIONS){
+      const clipId='walk.'+direction;
+      if(!existing.has(clipId)&&character.clips.length<16){
+        character.clips.push(createDirectionalWalkClip(direction));
+        changed=true;
+      }
+    }
+  }
+  return changed;
+}
 export function readRigProject(){
   try{
-    const stored=globalThis.localStorage?.getItem(RIG_STORAGE);
-    return stored?validateRigProject(JSON.parse(stored)):newRigProject();
+    const storage=globalThis.localStorage;
+    const stored=storage?.getItem(RIG_STORAGE);
+    if(!stored)return newRigProject();
+    const project=validateRigProject(JSON.parse(stored));
+    if(storage?.getItem(APPROVED_WALK_MIGRATION)!=='1'){
+      const changed=upgradeApprovedWalks(project);
+      // Storage can be unavailable in private browsing. Returning the valid
+      // in-memory project should not depend on a successful write.
+      try{
+        if(changed)storage?.setItem(RIG_STORAGE,JSON.stringify(project));
+        storage?.setItem(APPROVED_WALK_MIGRATION,'1');
+      }catch{}
+    }
+    return project;
   }catch{return newRigProject();}
 }
 export function storeRigProject(project){

@@ -93,3 +93,19 @@ quando um clipe direcional não existe. `actorWalkDirection` seleciona a
 direção a partir da velocidade ou orientação anterior; ambos são
 usados no renderizador do jogo. Criar um clipe no editor exige ação
 explícita e confirmação antes de substituir outro do mesmo ID.
+
+### Poses direcionais aprovadas e migração local
+
+`src/data/WalkPoseData.js` é a fonte única dos valores das 100 poses
+direcionais exportadas pelo usuário em 07/11/2026. O gerador produz
+quatro keyframes de caminhada e o quadro de fechamento sem alterar
+qualquer valor aprovado. `WalkGuide.js` apenas reexporta a fonte
+e calcula direção/mapeamento de clipes.
+
+`Rig2D.createClips` inclui esses clipes por padrão para 5 espécies
+bípedes. `readRigProject` executa migração aditiva uma única vez
+nos projetos armazenados antes da atualização: clipes existentes nunca
+são substituídos; personagens clonados ou modificações posteriores
+continuam intactos. O marcador local `APPROVED_WALK_MIGRATION`
+impede a reconstrução automática de clipes excluídos intencionalmente.
+A versão JSON do esquema permanece `1`.
