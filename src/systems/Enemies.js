@@ -65,7 +65,9 @@ export function updateHazards(g,dt){
     h.life-=dt;
     h.warmup-=dt;
     if(h.life<=0||h.warmup>0||p.inv>0)continue;
-    if(distanceSquared(h,p)<(h.radius+p.radius*.35)**2){
+    // Collision matches the elliptical warning drawn on the ground.
+    const rx=h.radius+p.radius*.35,ry=h.radius*.65+p.radius*.35;
+    if(((p.x-h.x)/rx)**2+((p.y-h.y)/ry)**2<1){
       const damage=Math.max(1,h.damage-p.armor);
       p.hp=Math.max(0,p.hp-damage);
       p.inv=.78;

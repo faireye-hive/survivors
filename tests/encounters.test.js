@@ -110,6 +110,19 @@ test('esporões criam áreas com aviso antes do dano e aplicam invulnerabilidade
   assert.equal(g.hazards.length,0);
 });
 
+test('áreas de esporos acertam somente dentro da forma elíptica visível',()=>{
+  const g=sim();
+  g.player.y=45;g.player.x=0;
+  g.hazards.push({x:0,y:0,radius:50,damage:12,life:3,warmup:0});
+  const hp=g.player.hp;
+  // Would hit with the old circular collision, but outside the visible oval.
+  updateHazards(g,.02);
+  assert.equal(g.player.hp,hp);
+  g.player.y=0;
+  updateHazards(g,.02);
+  assert.ok(g.player.hp<hp);
+});
+
 test('as aranhas alternam movimentos laterais sem perder perseguição',()=>{
   const g=sim();
   g.elapsed=125;g.spawnTimer=500;
