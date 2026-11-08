@@ -1,12 +1,13 @@
 /**
- * Fixed 8-minute threat curve. Starts approachable, adds pressure in stages;
- * caps population to keep Canvas drawing responsive on desktop and mobile.
+ * Horde pressure for the 8-minute survival challenge. Early defeats earn
+ * permanent currency, so fresh accounts are expected to improve over runs.
+ * Cap population in Enemies.js to keep Canvas responsive.
  */
 export const THREAT_STAGES=Object.freeze([
-  Object.freeze({at:0,pack:1,label:'Calmaria'}),
-  Object.freeze({at:75,pack:2,label:'Invasão'}),
-  Object.freeze({at:210,pack:3,label:'Cerco'}),
-  Object.freeze({at:360,pack:4,label:'Caos'})
+  Object.freeze({at:0,pack:2,label:'Calmaria'}),
+  Object.freeze({at:75,pack:3,label:'Invasão'}),
+  Object.freeze({at:210,pack:4,label:'Cerco'}),
+  Object.freeze({at:360,pack:5,label:'Caos'})
 ]);
 export function threatAt(seconds=0){
   const t=Number.isFinite(seconds)?Math.max(0,Math.min(480,seconds)):0;
@@ -15,10 +16,10 @@ export function threatAt(seconds=0){
     stage:THREAT_STAGES.indexOf(stage)+1,
     label:stage.label,
     pack:stage.pack,
-    interval:Math.max(.36,.9-t/900),
-    health:1+t/185,
-    speed:1+t/1100,
-    damage:Math.floor(t/65),
-    spawnRadiusFactor:.49
+    interval:Math.max(.32,.76-t/1000),
+    health:1+t/140,
+    speed:1+t/750,
+    damage:Math.floor(t/60),
+    spawnRadiusFactor:.43
   };
 }

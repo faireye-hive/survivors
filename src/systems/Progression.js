@@ -63,7 +63,7 @@ export function updateProgression(g,dt){
         p.hp=Math.min(p.maxHp,p.hp+15);
         g.addText('✦ RELÍQUIA · +7% DANO',p.x,p.y-65,'#f9da8d');
         g.burst(p.x,p.y,'#f9d18a',12);
-      }else p.xp+=d.value;
+      }else p.xp+=Math.round(d.value*(p.experienceGain||1));
       d.life=0;collected=true;
     }
   }

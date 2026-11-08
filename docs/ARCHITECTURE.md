@@ -52,3 +52,31 @@ usa exclusivamente `createElementNS` com caminhos estáticos (sem
 curto, cor e grupo; `Interface.showLevel` combina ícone, efeito em
 destaque e descrição secundária sem alterar `applyChoice`.
 No HUD desktop, o indicador AMEAÇA mostra o nível atual da curva.
+
+## Progressão entre tentativas
+
+`src/storage/Profile.js` estende o mesmo `cronicas_eter_profile_v1`
+com `gold`, `lifetimeGold`, `lastGold`, `bestLevel` e um objeto
+`upgrades`; perfis antigos continuam válidos. `calculateRunGold` é
+uma função pura limitada a valores finitos; a recompensa cresce de
+acordo com nível, kills, tempo e bônus por vitória. `recordRun` mantém
+os recordes e concede o ouro uma única vez por término de partida
+(`Game.finish` já impede chamadas duplicadas).
+
+`src/data/metaUpgrades.js` declara as seis melhorias disponíveis,
+efeitos, limites e preços crescentes. `buyPermanentUpgrade` valida
+ID, saldo, limite e sucesso da gravação antes de confirmar a compra.
+`Game.reset` carrega o perfil, calcula `permanentBonuses` e aplica
+os atributos às três classes. O bônus de experiência afeta os cristais
+de XP recolhidos em `Progression.js`. As melhorias compradas não
+alteram a partida em andamento.
+
+`src/ui/MetaShop.js` constrói as seis opções do menu com DOM seguro,
+níveis, preços e ícones SVG. `Interface.js` permite abrir a loja
+no menu ou na tela de derrota/vitória e voltar ao estado anterior,
+exibindo ouro conquistado e ouro guardado. Não existe moeda externa
+ou servidor remoto; o progresso é local ao navegador.
+
+O equilíbrio de hordas usa 2, 3, 4 e 5 inimigos por grupo nas
+fases temporais de `difficulty.js`; vida e velocidade crescem mais
+rapidamente, mantendo o limite de atores renderizados.

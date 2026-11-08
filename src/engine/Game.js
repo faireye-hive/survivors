@@ -6,7 +6,8 @@ import { AudioEngine } from '../audio/Audio.js';
 import { spawnEnemy, updateEnemies } from '../systems/Enemies.js';
 import { updateCombat } from '../systems/Combat.js';
 import { updateProgression, applyChoice, xpForLevel } from '../systems/Progression.js';
-import { recordRun } from '../storage/Profile.js';
+import { getProfile,recordRun } from '../storage/Profile.js';
+import {permanentBonuses} from '../data/metaUpgrades.js';
 
 export class Game {
   static DURATION=8*60;
@@ -28,13 +29,18 @@ export class Game {
   reset(classId){
     const hero=CLASSES[classId]||CLASSES.guardian;
     this.lastClass=hero.id;this.world=new World(173);
-    this.player={x:0,y:0,vx:0,vy:0,radius:16,hp:hero.hp,maxHp:hero.hp,
-      speed:hero.speed,armor:hero.armor,might:hero.might,magnet:74,
+    const bonuses=permanentBonuses(getProfile());
+    const hp=hero.hp+bonuses.maxHp;
+    this.player={x:0,y:0,vx:0,vy:0,radius:16,hp,maxHp:hp,
+      speed:hero.speed*bonuses.speed,armor:hero.armor+bonuses.armor,
+      might:hero.might*bonuses.might,magnet:74+bonuses.magnet,
+      experienceGain:bonuses.experience,
       xp:0,nextXp:xpForLevel(1),level:1,classId:hero.id,facing:0,inv:0,attackPose:0};
     this.frameDt=0;this.elapsed=0;this.kills=0;this.spawnTimer=.7;this.lastPickupSound=-10;
     this.bossFlags={first:false,second:false};
     this.enemies=[];this.drops=[];this.projectiles=[];this.effects=[];this.particles=[];this.floatTexts=[];
     this.hazards=[];this.encountersSeen=new Set();this.eventBanner=null;this.relics=0;
+    this.goldEarned=0;
     this.upgrades={};this.weapons=[{id:hero.weapon,level:1,cooldown:.2}];
     this.currentChoices=null;this.paused=false;this.pauseReason=null;this.input.reset();
   }
@@ -76,7 +82,9 @@ export class Game {
   finish(won){
     if(this.state!=='playing')return;
     this.state=won?'won':'lost';this.paused=true;
-    recordRun(this.elapsed,this.kills);
+    const profile=recordRun(this.elapsed,this.kills,{level:this.player.level,won});
+    this.goldEarned=profile.lastGold;
+    this.goldWallet=profile.gold;
     this.audio.play(won?'level':'death');
     this.ui.showEnd(this,won);
     cancelAnimationFrame(this.raf);this.raf=0;

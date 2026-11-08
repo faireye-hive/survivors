@@ -1,7 +1,8 @@
 import { CLASSES } from '../data/classes.js';
 import { WEAPONS } from '../data/weapons.js';
 import { formatTime } from '../core/math.js';
-import { getProfile } from '../storage/Profile.js';
+import { getProfile,calculateRunGold,buyPermanentUpgrade } from '../storage/Profile.js';
+import {renderShopGrid} from './MetaShop.js';
 import {createUpgradeIcon} from './UpgradeIcons.js';
 import { hudStats, minimapMarkers, MINIMAP_RADIUS } from './HudData.js';
 
@@ -14,7 +15,9 @@ export class Interface {
       'bottom-might','bottom-speed','weapon-list','upgrade-options','level-up-number',
       'end-kicker','end-title','end-description','end-time','end-kills','end-level',
       'sound-toggle','minimap','minimap-panel','hud-map-button','hud-info',
-      'hud-info-title','hud-info-content','hud-info-close'];
+      'hud-info-title','hud-info-content','hud-info-close',
+      'shop-screen','shop-grid','shop-gold','shop-message','menu-gold',
+      'end-gold-earned','end-gold-wallet','run-gold-preview'];
     for(const id of ids)this.el[id]=document.getElementById(id);
     this.classId='guardian';this.game=null;this.lastHud=0;this.lastWeapons='';
     this.currentPanel=null;this.miniExpanded=false;
@@ -35,6 +38,17 @@ export class Interface {
     action('pause-menu',()=>game.backToMenu());
     action('again-button',()=>game.start(game.lastClass));
     action('end-menu',()=>game.backToMenu());
+    action('open-shop',()=>this.showShop());
+    action('end-shop',()=>this.showShop());
+    action('shop-close',()=>this.closeShop());
+    this.el['shop-grid'].addEventListener('click',event=>{
+      const button=event.target.closest('button[data-meta-upgrade]');
+      if(!button||button.disabled)return;
+      const result=buyPermanentUpgrade(button.dataset.metaUpgrade);
+      this.renderShop();
+      this.el['shop-message'].textContent=result.reason;
+      this.el['shop-message'].dataset.success=String(result.ok);
+    });
     action('sound-toggle',()=>{
       const enabled=game.audio.toggle();
       this.el['sound-toggle'].textContent=enabled?'♫':'♪';
@@ -59,13 +73,14 @@ export class Interface {
     this.showMenu();
   }
   hideScreens(){
-    for(const id of ['menu','level-screen','pause-screen','end-screen'])
+    for(const id of ['menu','level-screen','pause-screen','end-screen','shop-screen'])
       this.el[id].hidden=true;
   }
   showMenu(){
     this.hideScreens();this.el.hud.hidden=true;this.el.menu.hidden=false;
     this.closeInfo();
     const best=getProfile();
+    this.el['menu-gold'].textContent=best.gold.toLocaleString('pt-BR');
     this.el['best-label'].textContent=best.runs?formatTime(best.bestTime):'—';
     this.el['best-kills'].textContent=best.runs?
       best.bestKills+' inimigos derrotados • '+best.runs+' partidas':
@@ -114,11 +129,34 @@ export class Interface {
       '✦ O ÉTER RECONHECE SUA VITÓRIA ✦':'✧ A NÉVOA REIVINDICOU UM HERÓI ✧';
     this.el['end-title'].textContent=won?'Lenda imortal':'A jornada terminou';
     this.el['end-description'].textContent=won?
-      'Você resistiu a todas as ondas. O mundo ainda guarda novos segredos.':
-      'Cada tentativa fortalece sua história. Volte mais preparado.';
+      'Você resistiu a todas as ondas! O ouro conquistado financia a próxima aventura.':
+      'A tentativa terminou, mas seu ouro foi guardado. Evolua na loja e tente ir mais longe.';
     this.el['end-time'].textContent=formatTime(game.elapsed);
     this.el['end-kills'].textContent=game.kills;
     this.el['end-level'].textContent=game.player.level;
+    this.el['end-gold-earned'].textContent=(game.goldEarned||0).toLocaleString('pt-BR');
+    this.el['end-gold-wallet'].textContent=getProfile().gold.toLocaleString('pt-BR');
+  }
+  /** Shop can be opened from menu or defeat/victory, never during combat. */
+  showShop(){
+    if(!['menu','lost','won'].includes(this.game?.state))return;
+    this.hideScreens();
+    this.el.hud.hidden=true;
+    this.closeInfo();
+    this.el['shop-screen'].hidden=false;
+    this.el['shop-message'].textContent='';
+    this.renderShop();
+  }
+  renderShop(){
+    const profile=getProfile();
+    this.el['shop-gold'].textContent=profile.gold.toLocaleString('pt-BR');
+    renderShopGrid(this.el['shop-grid'],profile);
+  }
+  closeShop(){
+    if(this.el['shop-screen'].hidden)return;
+    this.el['shop-screen'].hidden=true;
+    if(this.game.state==='menu')this.showMenu();
+    else this.showEnd(this.game,this.game.state==='won');
   }
   toggleInfo(type){
     if(this.currentPanel===type){this.closeInfo();return;}
@@ -160,6 +198,8 @@ export class Interface {
       add('p','Melhor tempo: '+(best.runs?formatTime(best.bestTime):'—'));
       add('p','Maior número de derrotas: '+(best.bestKills||0));
       add('p','Partidas concluídas: '+(best.runs||0));
+      add('p','Recorde de nível: '+(best.bestLevel||1));
+      add('p','Ouro guardado: '+best.gold+' · Ouro conquistado: '+best.lifetimeGold);
       add('p','Relíquias desta partida: '+(game.relics||0));
     }else if(type==='help'){
       this.el['hud-info-title'].textContent='Como jogar';
@@ -170,6 +210,7 @@ export class Interface {
       add('p','Aranhas avançam em zigue-zague. Derrote inimigos de elite dourados para coletar relíquias que aumentam seu dano.');
       add('p','A ameaça cresce em quatro fases até 8 minutos; os chefes avisam com um círculo dourado antes de investir.');
       add('p','Na evolução, escolha pelo ícone e pelo ganho curto em destaque. Cada arma e atributo possui símbolo próprio.');
+      add('p','Ao fim de cada partida, receba ouro conforme o nível alcançado, inimigos derrotados e tempo. Gaste na loja para desbloquear poder permanente na próxima tentativa.');
       add('p','Esc ou P: pausar. O minimapa exibe inimigos próximos e a sua posição.');
     }
   }
@@ -240,6 +281,9 @@ export class Interface {
     this.el['xp-fill'].parentElement.setAttribute('aria-valuenow',String(s.xp));
     this.el['xp-fill'].parentElement.setAttribute('aria-valuemax',String(s.nextXp));
     this.el['time-label'].textContent=formatTime(s.elapsed);
+    this.el['run-gold-preview'].textContent=calculateRunGold({
+      level:s.level,kills:s.kills,time:s.elapsed
+    }).toLocaleString('pt-BR');
     this.el['kills-label'].textContent=game.enemies.filter(e=>e.hp>0).length;
     const signature=s.weapons.map(w=>w.id+':'+w.level).join('|');
     if(this.lastWeapons!==signature){
