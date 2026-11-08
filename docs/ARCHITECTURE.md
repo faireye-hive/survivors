@@ -1,111 +1,31 @@
 # Arquitetura — Crônicas do Éter
 
-## Tecnologias
+## Fundamentos
 
-- JavaScript ES Modules e Vite para desenvolvimento e publicação.
-- Canvas 2D para o cenário, personagens, monstros, efeitos e minimapa.
-- HTML/CSS para interface e Web Audio para sons sintetizados.
-- Sem bibliotecas gráficas 3D, modelos externos ou spritesheets.
+Frontend Vite + ES Modules, simulação JS, única renderização Canvas 2D e interface HTML/CSS. Sem 3D, sprites externos ou dependências gráficas pesadas. A página `index.html` é o único ponto de entrada do site.
 
-## Fluxo de jogo
+## Gameplay
 
-`Game.step(dt)` calcula movimento, inimigos, combate, progressão e efeitos.
-`Renderer.render(game)` desenha o mundo e os atores por profundidade Y usando
-um único `CanvasRenderingContext2D`. O jogador fica no centro da câmera.
-A interface e o minimapa são atualizados em módulos independentes.
+`Game.step(dt)` atualiza movimento, inimigos, efeitos, combate e experiência. `Enemies.js` inclui perseguição, movimento de flanco para aranhas, temporizadores do Esporão, dano de áreas com sinalização prévia e três eventos únicos por partida. `encounters.js` guarda o calendário em segundos; uma `Set` evita repetir eventos. O número de inimigos fica limitado a 170; perigos no chão a 24.
 
-## Rig procedural 2D compartilhado
+`Combat.js` calcula ataques automáticos, projéteis e morte de inimigos. Inimigos de elite soltam relíquias garantidas; `Progression.js` aplica +7% de dano e +15 PV (limitados a HP máximo). A progressão de nível continua oferecendo armas e melhorias existentes.
 
-`src/data/Rig2D.js` define `RIG_SCHEMA`, versão 1, templates de
-`hero.guardian`, `hero.mage`, `hero.ranger`, `monster.slime`, `monster.bat`,
-`monster.skeleton`, `monster.wraith` e `monster.colossus`.
+`Renderer.js` desenha o mapa, as áreas perigosas no chão, os drops, personagens, projéteis e avisos passageiros. A ordem garante que ameaças no chão fiquem atrás dos inimigos e o aviso de onda apareça acima do jogo, sem bloquear os controles.
 
-Cada personagem possui `id`, `template`, `name`, `colors` e `clips`.
-Cada animação contém `id`, `duration`, `loop` e
-`frames: [{time,pose}]`; cada pose é um mapa de peças para
-`{x,y,rotation,scale}`. As transformações são relativas ao pai, com pivôs
-no tronco, cabeça, olhos, boca, braços, mãos, pernas, pés e arma.
-Os keyframes são interpolados; a rotação usa o arco angular mais curto.
+## Arte dos personagens
 
-`src/render/characters/RigRenderer.js` desenha todos os personagens e
-monstros usando esse mesmo sistema. `src/render/Art.js` delega
-`drawPlayer` e `drawEnemy` ao renderizador compartilhado, preservando
-as rotinas de itens, projéteis e efeitos especiais.
+Guerreiro, Arcanista e Andarilho compartilham o mesmo estilo ilustrado Canvas 2D via `src/render/characters/RigRenderer.js`, sem um editor. O personagem é desenhado a partir dos atributos de aparência e poses do código. O renderizador evita adicionar braços ou pés humanoides em monstros que não os possuem.
 
-O Guerreiro foi redesenhado no mesmo estilo compacto ilustrado dos demais
-heróis. O código detalhado antigo foi removido, evitando dois sistemas
-separados de aparência e animação.
+`WildCreatures.js` implementa o Esporão e a Aranha com formas procedurais: chapéu/haste para fungos e oito patas para aranhas. `Art.js` seleciona entre os desenhos específicos e o renderizador compartilhado, sem fallback para o slime no caso desses dois monstros.
 
-## Rig Studio 2D
+`Rig2D.js` conserva o formato `cronicas-do-eter/rig2d` versão 1 e os padrões do jogo. As 100 poses de caminhada aprovadas do arquivo do usuário são geradas por `WalkPoseData.js` para as quatro direções. `WalkGuide.js` resolve a direção pelo movimento e seleciona a animação apropriada.
 
-`warrior-studio.html` e `src/studio/WarriorStudio.js` implementam um
-editor de personagens Canvas 2D com preview em tempo real, seleção e
-arraste das articulações, inspetor de propriedades, editor de cores,
-keyframes, linha do tempo, reprodução, importação/exportação JSON e PNG.
+Os dados previamente gravados em `cronicas.2d.rigs.v1` continuam legíveis para não perder alterações já feitas pelo usuário. O Rig Studio foi descontinuado e seus arquivos exclusivos retirados: desenvolvimento a partir de agora é focado no jogo.
 
-A biblioteca de poses é gravada em `localStorage` usando
-`cronicas.2d.rigs.v1` e carregada no início do jogo. O editor pode exportar
-um personagem isolado ou o projeto completo, ambos no formato
-`cronicas-do-eter/rig2d`, versão 1. Os arquivos importados são validados:
-IDs, templates, cores, clipes, duração e números das transformações possuem
-limites. Importar um personagem de ID existente substitui o registro
-daquele ID no projeto local.
+## Mundo e apresentação
 
-A integração de uma animação personalizada ao jogo ocorre automaticamente
-na próxima recarga da página (mesma origem do navegador) quando o clipe
-se chama `idle`, `walk`, `attack` ou `hit`. Clipes com outros nomes são
-disponibilizados no editor e precisam de um gatilho de gameplay para ser
-reproduzidos durante a partida.
+`World.js` constrói terrenos determinísticos com biomas e objetos desenhados em Canvas. `HudData.js` fornece ao HUD pontos reais de vida, arma, XP e posições do minimapa. Elites e relíquias têm identificação visual distinta. Efeitos e banners são temporários; não interrompem a partida.
 
-## Desempenho
+## Validação
 
-Canvas 2D, culling de atores fora da tela, nenhuma textura externa e
-atualizações do jogo via `requestAnimationFrame`. Futuras melhorias:
-cache de poses de multidões e spatial hash de colisões.
-
-Execute `npm test` e `npm run build` antes da publicação no GitHub Pages.
-
-## Anatomia e edição com restrições
-
-`RIG_ANATOMY` seleciona as peças reais de cada espécie. `rigNodeDefinition`
-fornece pivôs próprios (ex.: rosto dentro do slime, asas do morcego), e
-`getRigHandles(pose,character)` devolve somente as juntas dessa anatomia.
-Monstros não compartilham a estrutura humana por acidente.
-
-O editor oferece dois gestos: girar no pivô (padrão, com alça circular)
-e mover partes com mobilidade definida. `rigOffsetRange` e
-`boundedRigValue` limitam deslocamentos na interface, no desenho
-e na validação de JSON; articulações rígidas têm deslocamento zero
-e permitem rotação. Os descendentes seguem a transformação do pai.
-
-## Guia de caminhada de quatro direções
-
-`src/data/WalkGuide.js` gera poses procedurais de contato/passagem
-para frente, trás, esquerda e direita. `src/studio/WalkReference.js`
-desenha o esqueleto diretamente no Canvas usando os mesmos pivôs
-de `getRigHandles`. O painel contém 16 miniaturas sem imagens externas,
-sobreposição opcional, opacidade e seleção do quadro.
-
-`createDirectionalWalkClip` cria `walk.front`, `walk.back`, `walk.left`
-ou `walk.right` com quatro poses e um quadro de fechamento no tempo
-final. `resolveWalkAction` faz fallback para a animação antiga `walk`
-quando um clipe direcional não existe. `actorWalkDirection` seleciona a
-direção a partir da velocidade ou orientação anterior; ambos são
-usados no renderizador do jogo. Criar um clipe no editor exige ação
-explícita e confirmação antes de substituir outro do mesmo ID.
-
-### Poses direcionais aprovadas e migração local
-
-`src/data/WalkPoseData.js` é a fonte única dos valores das 100 poses
-direcionais exportadas pelo usuário em 07/11/2026. O gerador produz
-quatro keyframes de caminhada e o quadro de fechamento sem alterar
-qualquer valor aprovado. `WalkGuide.js` apenas reexporta a fonte
-e calcula direção/mapeamento de clipes.
-
-`Rig2D.createClips` inclui esses clipes por padrão para 5 espécies
-bípedes. `readRigProject` executa migração aditiva uma única vez
-nos projetos armazenados antes da atualização: clipes existentes nunca
-são substituídos; personagens clonados ou modificações posteriores
-continuam intactos. O marcador local `APPROVED_WALK_MIGRATION`
-impede a reconstrução automática de clipes excluídos intencionalmente.
-A versão JSON do esquema permanece `1`.
+`npm test` executa verificações do gameplay, encontros, renderização 2D, upgrades, movimento, anatomia dos personagens e dados de caminhada. `npm run build` gera o site estático em `dist/`. O workflow do GitHub publica esse artefato no GitHub Pages.

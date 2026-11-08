@@ -39,7 +39,9 @@ export function minimapMarkers(game,radius=MINIMAP_RADIUS){
   for(const drop of game.drops){
     if(drop.life<=0)continue;
     const m=norm(drop.x,drop.y);
-    if(inside(m)&&drops.length<75)drops.push({...m,heal:drop.kind==='heal'});
+    if(inside(m)&&drops.length<75)drops.push({
+      ...m,heal:drop.kind==='heal',relic:drop.kind==='relic'
+    });
   }
   const sanctuary=norm(0,0);
   return {enemies,drops,sanctuary:inside(sanctuary)?sanctuary:null};
