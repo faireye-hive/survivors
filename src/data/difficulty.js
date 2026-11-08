@@ -1,6 +1,7 @@
 /**
  * Horde pressure for the 8-minute survival challenge. Early defeats earn
  * permanent currency, so fresh accounts are expected to improve over runs.
+ * Enemy HP/damage also scale with player level via levelMilestones.js.
  * Cap population in Enemies.js to keep Canvas responsive.
  */
 export const THREAT_STAGES=Object.freeze([

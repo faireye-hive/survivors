@@ -33,7 +33,11 @@ export function minimapMarkers(game,radius=MINIMAP_RADIUS){
   for(const e of game.enemies){
     if(e.hp<=0)continue;
     const m=norm(e.x,e.y);
-    if(inside(m)&&enemies.length<150)enemies.push({...m,boss:Boolean(e.boss)});
+    if(inside(m)&&enemies.length<150){
+      const marker={...m,boss:Boolean(e.boss)};
+      if(e.miniBoss)marker.miniBoss=true;
+      enemies.push(marker);
+    }
   }
   const drops=[];
   for(const drop of game.drops){

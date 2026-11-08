@@ -1,6 +1,7 @@
 import { distanceSquared } from '../core/math.js';
 import { STAT_UPGRADES } from '../data/upgrades.js';
 import { WEAPONS } from '../data/weapons.js';
+import {spawnLevelMilestone} from './Enemies.js';
 export function xpForLevel(lv){return Math.round(24+lv*12+lv*lv*2);}
 export function createChoices(g){
   const pool=[];
@@ -9,14 +10,14 @@ export function createChoices(g){
     if(w?.level>=def.maxLevel)continue;
     pool.push({id:'weapon:'+id,name:def.name,glyph:def.glyph,
       effect:w?'DANO ↑ · RECARGA ↓':def.effect,
-      accent:def.accent,family:'weapon',
+      accent:def.accent,family:'weapon',theme:def.theme,
       description:w?'Aumenta o dano e a cadência desta arma.':def.description,
       tier:w?'NÍVEL '+(w.level+1):'NOVA ARMA'});
   }
   for(const [id,def] of Object.entries(STAT_UPGRADES)){
     const level=g.upgrades[id]||0;if(level>=def.maxLevel)continue;
     pool.push({id:'stat:'+id,name:def.name,glyph:def.glyph,
-      effect:def.effect,accent:def.accent,family:'stat',
+      effect:def.effect,accent:def.accent,family:'stat',theme:def.theme,
       description:def.description,tier:id==='recovery'?'CURA':'NÍVEL '+(level+1)});
   }
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
@@ -71,6 +72,8 @@ export function updateProgression(g,dt){
   if(collected&&g.elapsed-g.lastPickupSound>.15){g.audio.play('pickup');g.lastPickupSound=g.elapsed;}
   if(p.xp>=p.nextXp){
     p.xp-=p.nextXp;p.level++;p.nextXp=xpForLevel(p.level);
+    // Milestone enemies await while the player chooses an upgrade.
+    spawnLevelMilestone(g,p.level);
     g.paused=true;g.pauseReason='level';g.audio.play('level');
     g.ui.showLevel(p.level,createChoices(g));
   }

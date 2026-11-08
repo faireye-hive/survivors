@@ -37,7 +37,7 @@ export class Game {
       experienceGain:bonuses.experience,
       xp:0,nextXp:xpForLevel(1),level:1,classId:hero.id,facing:0,inv:0,attackPose:0};
     this.frameDt=0;this.elapsed=0;this.kills=0;this.spawnTimer=.7;this.lastPickupSound=-10;
-    this.bossFlags={first:false,second:false};
+    this.levelMilestones=new Set();this.enemyShots=[];this.bonusGold=0;
     this.enemies=[];this.drops=[];this.projectiles=[];this.effects=[];this.particles=[];this.floatTexts=[];
     this.hazards=[];this.encountersSeen=new Set();this.eventBanner=null;this.relics=0;
     this.goldEarned=0;
@@ -82,7 +82,9 @@ export class Game {
   finish(won){
     if(this.state!=='playing')return;
     this.state=won?'won':'lost';this.paused=true;
-    const profile=recordRun(this.elapsed,this.kills,{level:this.player.level,won});
+    const profile=recordRun(this.elapsed,this.kills,{
+      level:this.player.level,won,bonusGold:this.bonusGold||0
+    });
     this.goldEarned=profile.lastGold;
     this.goldWallet=profile.gold;
     this.audio.play(won?'level':'death');

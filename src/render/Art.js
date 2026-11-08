@@ -15,13 +15,14 @@ export function drawEnemy(c,e,x,y,t){
   const float=e.type==='bat'||e.type==='wraith'?Math.sin(t*7+e.id)*3:Math.sin(t*3+e.id)*1.2;
   if(!drawWildCreature(c,e,x,y+float,t)){
     drawRigActor(c,e,x,y+float,t,{
-      id:'monster.'+e.type,scale:e.elite?1.2:1
+      id:'monster.'+e.type,
+      scale:e.miniBoss?1.85:e.boss?1.23:e.elite?1.2:1
     });
   }
-  if(e.boss&&e.rushWarmup>0){
+  if((e.boss||e.miniBoss)&&e.rushWarmup>0){
     // Amber focus ring telegraphs the upcoming lunge. The center arrow
     // points along the boss's current facing direction.
-    const q=Math.max(0,Math.min(1,e.rushWarmup/.7));
+    const q=Math.max(0,Math.min(1,e.rushWarmup/(e.miniBoss?.55:.7)));
     c.strokeStyle='#ffe3a3';c.lineWidth=2.4+Math.sin(t*20)*.55;
     c.setLineDash([8,5]);
     c.beginPath();c.arc(x,y,e.radius*(1.2+(1-q)*.5),0,PI2);c.stroke();
@@ -29,18 +30,30 @@ export function drawEnemy(c,e,x,y,t){
     c.fillStyle='#f9cc8399';
     c.beginPath();c.arc(x,y-e.radius*3.25,4+(1-q)*3,0,PI2);c.fill();
   }
-  if(e.boss&&e.rushTime>0){
+  if((e.boss||e.miniBoss)&&e.rushTime>0){
     c.strokeStyle='#ffdca37a';c.lineWidth=3;
     c.beginPath();c.arc(x,y,e.radius*1.4,0,PI2);c.stroke();
+  }
+  if(e.boss&&e.novaWarmup>0){
+    // Radial volley wind-up: two rings warn before the projectiles launch.
+    const pulse=1-e.novaWarmup/.85;
+    c.strokeStyle='#f2b9e7';c.lineWidth=2.6;
+    for(const size of [1.35,1.95]){
+      c.beginPath();c.arc(x,y,e.radius*(size+pulse*.32),0,PI2);c.stroke();
+    }
+  }
+  if(e.miniBoss){
+    c.strokeStyle='#8bdcdbbb';c.lineWidth=2.3;
+    c.beginPath();c.ellipse(x,y-15,e.radius*1.24,e.radius*1.48,0,0,PI2);c.stroke();
   }
   if(e.elite){
     c.strokeStyle='#e8c88588';c.lineWidth=1.5;
     c.beginPath();c.ellipse(x,y-19,e.radius*1.9,e.radius*2.5,0,0,PI2);c.stroke();
   }
-  if(e.hp>0&&e.hp<e.maxHp){
+  if(e.hp>0&&(e.hp<e.maxHp||e.miniBoss)){
     const w=Math.max(32,e.radius*2);
     c.fillStyle='#111d27';c.fillRect(x-w/2,y-e.radius*3.6,w,4);
-    c.fillStyle=e.boss?'#f2cd7e':e.elite?'#f5d196':'#ed8b91';
+    c.fillStyle=e.boss?'#f2cd7e':e.miniBoss?'#77dfd5':e.elite?'#f5d196':'#ed8b91';
     c.fillRect(x-w/2,y-e.radius*3.6,w*Math.max(0,e.hp/e.maxHp),4);
   }
   c.restore();
@@ -110,5 +123,18 @@ export function drawHazard(c,h,x,y,t=0){
         2+(i%3),'#dcf4ab');
     }
   }
+  c.restore();
+}
+
+/** Enemy radial magic projectiles; never confused with the hero's shots. */
+export function drawEnemyShot(c,shot,x,y,t){
+  c.save();c.translate(x,y);
+  const r=shot.radius||7;
+  const glow=.6+Math.sin(t*12+x*.05)*.2;
+  c.globalAlpha=glow;
+  oval(c,0,0,r*2,r*2,'#ce72d866');
+  c.globalAlpha=1;
+  circle(c,0,0,r,'#e5a0e9');
+  circle(c,-r*.2,-r*.25,r*.48,'#fff0ff');
   c.restore();
 }

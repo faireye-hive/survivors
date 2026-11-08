@@ -69,10 +69,11 @@ export function drawWildCreature(c,e,x,y,t){
   if(e.type!=='spider'&&e.type!=='spore')return false;
   c.save();
   c.translate(x,y);
-  c.scale(e.elite?1.2:1,e.elite?1.2:1);
+  const size=e.miniBoss?1.85:e.elite?1.2:1;
+  c.scale(size,size);
   c.globalAlpha*=e.hit>0?.85:1;
-  if(e.elite){
-    c.strokeStyle='#f4d79799';c.lineWidth=1.6;
+  if(e.elite||e.miniBoss){
+    c.strokeStyle=e.miniBoss?'#7adad9bb':'#f4d79799';c.lineWidth=1.6;
     c.beginPath();c.ellipse(0,-14,35,37,0,0,TAU);c.stroke();
   }
   if(e.type==='spider')spider(c,e,t);

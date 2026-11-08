@@ -32,17 +32,18 @@ function persist(profile){
  * Even an early defeat yields gold. The victory bonus is optional.
  * All values are bounded to prevent malformed stats / overflow.
  */
-export function calculateRunGold({level=1,kills=0,time=0,won=false}={}){
+export function calculateRunGold({level=1,kills=0,time=0,won=false,bonusGold=0}={}){
   const lv=Math.max(1,safeInt(level,1000));
   const defeated=safeInt(kills,1_000_000);
   const seconds=safeInt(time,86400);
   return Math.min(GOLD_CAP,10+lv*10+lv*lv*3+
-    Math.floor(defeated/6)+Math.floor(seconds/10)+(won?200:0));
+    Math.floor(defeated/6)+Math.floor(seconds/10)+(won?200:0)+safeInt(bonusGold));
 }
 export function recordRun(time,kills,options={}){
   const p=getProfile();
   const earned=calculateRunGold({
-    level:options.level??1,kills,time,won:options.won===true
+    level:options.level??1,kills,time,won:options.won===true,
+    bonusGold:options.bonusGold??0
   });
   p.bestTime=Math.max(p.bestTime,safeInt(time,86400));
   p.bestKills=Math.max(p.bestKills,safeInt(kills));

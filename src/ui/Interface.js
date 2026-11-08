@@ -17,7 +17,9 @@ export class Interface {
       'sound-toggle','minimap','minimap-panel','hud-map-button','hud-info',
       'hud-info-title','hud-info-content','hud-info-close',
       'shop-screen','shop-grid','shop-gold','shop-message','menu-gold',
-      'end-gold-earned','end-gold-wallet','run-gold-preview'];
+      'end-gold-earned','end-gold-wallet','run-gold-preview',
+      'boss-health','boss-health-name','boss-health-level',
+      'boss-health-fill','boss-health-numbers'];
     for(const id of ids)this.el[id]=document.getElementById(id);
     this.classId='guardian';this.game=null;this.lastHud=0;this.lastWeapons='';
     this.currentPanel=null;this.miniExpanded=false;
@@ -102,12 +104,15 @@ export class Interface {
       const button=document.createElement('button');
       button.className='upgrade-option';button.dataset.upgrade=choice.id;
       button.dataset.family=choice.family;
+      button.dataset.theme=choice.theme;
       button.style.setProperty('--upgrade-accent',choice.accent);
       button.setAttribute('aria-label',
         choice.name+'. '+choice.effect+'. '+choice.description+'. '+choice.tier);
       const category=document.createElement('span');
       category.className='upgrade-kind';
-      category.textContent=choice.family==='weapon'?'ARMA':'ATRIBUTO';
+      category.textContent={
+        attack:'⚔ ATAQUE',defense:'⬡ DEFESA',utility:'✧ UTILIDADE'
+      }[choice.theme]||'MELHORIA';
       const icon=document.createElement('span');
       icon.className='upgrade-icon';
       icon.appendChild(createUpgradeIcon(choice.id));
@@ -208,7 +213,8 @@ export class Interface {
       add('p','Pegue os cristais de experiência. Ao subir de nível, escolha uma melhoria.');
       add('p','A partir de 01:00 surgem Esporões que criam áreas tóxicas no chão: saia dos círculos antes de eles ativarem.');
       add('p','Aranhas avançam em zigue-zague. Derrote inimigos de elite dourados para coletar relíquias que aumentam seu dano.');
-      add('p','A ameaça cresce em quatro fases até 8 minutos; os chefes avisam com um círculo dourado antes de investir.');
+      add('p','A ameaça cresce com o tempo e com o nível do herói. Nível 5, 15, 25: miniboss gigante. Nível 10, 20, 30: chefe principal com projéteis circulares e vida no topo.');
+      add('p','Os chefes anunciam suas investidas e ataques de área; sobreviva, derrote-os e ganhe XP e ouro bônus.');
       add('p','Na evolução, escolha pelo ícone e pelo ganho curto em destaque. Cada arma e atributo possui símbolo próprio.');
       add('p','Ao fim de cada partida, receba ouro conforme o nível alcançado, inimigos derrotados e tempo. Gaste na loja para desbloquear poder permanente na próxima tentativa.');
       add('p','Esc ou P: pausar. O minimapa exibe inimigos próximos e a sua posição.');
@@ -249,8 +255,8 @@ export class Interface {
     }
     for(const m of markers.enemies){
       const q=toScreen(m);
-      ctx.fillStyle=m.boss?'#ffe0a2':'#ef777a';
-      ctx.beginPath();ctx.arc(q.x,q.y,m.boss?4.1:2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=m.boss?'#ffe0a2':m.miniBoss?'#85e2d9':'#ef777a';
+      ctx.beginPath();ctx.arc(q.x,q.y,m.boss?4.1:m.miniBoss?3.2:2,0,Math.PI*2);ctx.fill();
       if(m.boss){ctx.strokeStyle='#ffcc87';ctx.stroke();}
     }
     ctx.save();ctx.translate(w/2,h/2);
@@ -282,9 +288,23 @@ export class Interface {
     this.el['xp-fill'].parentElement.setAttribute('aria-valuemax',String(s.nextXp));
     this.el['time-label'].textContent=formatTime(s.elapsed);
     this.el['run-gold-preview'].textContent=calculateRunGold({
-      level:s.level,kills:s.kills,time:s.elapsed
+      level:s.level,kills:s.kills,time:s.elapsed,
+      bonusGold:game.bonusGold||0
     }).toLocaleString('pt-BR');
     this.el['kills-label'].textContent=game.enemies.filter(e=>e.hp>0).length;
+    const mainBoss=game.enemies.find(e=>e.boss&&e.hp>0);
+    this.el['boss-health'].hidden=!mainBoss;
+    if(mainBoss){
+      const hp=Math.max(0,Math.ceil(mainBoss.hp));
+      const max=Math.max(1,mainBoss.maxHp);
+      this.el['boss-health-name'].textContent=mainBoss.name||'Guardião da Névoa';
+      this.el['boss-health-level'].textContent='Nv. '+(mainBoss.milestoneLevel||10);
+      this.el['boss-health-fill'].style.width=(hp/max*100).toFixed(2)+'%';
+      this.el['boss-health-numbers'].textContent=hp+' / '+max+' PV';
+      const bar=this.el['boss-health-fill'].parentElement;
+      bar.setAttribute('aria-valuenow',String(hp));
+      bar.setAttribute('aria-valuemax',String(max));
+    }
     const signature=s.weapons.map(w=>w.id+':'+w.level).join('|');
     if(this.lastWeapons!==signature){
       this.lastWeapons=signature;

@@ -1,4 +1,4 @@
-import { drawPlayer, drawEnemy, drawDrop, drawProjectile, drawEffect,drawHazard } from './Art.js';
+import { drawPlayer, drawEnemy, drawDrop, drawProjectile, drawEffect,drawHazard,drawEnemyShot } from './Art.js';
 
 // All gameplay visuals use the same CanvasRenderingContext2D.
 export class Renderer {
@@ -33,6 +33,10 @@ export class Renderer {
         const e=actor.enemy,x=e.x-camX,y=e.y-camY;
         if(x>-90&&x<w+90&&y>-110&&y<h+90)drawEnemy(c,e,x,y,game.elapsed);
       }
+    }
+    for(const shot of game.enemyShots||[]){
+      const x=shot.x-camX,y=shot.y-camY;
+      if(x>-25&&x<w+25&&y>-25&&y<h+25)drawEnemyShot(c,shot,x,y,game.elapsed);
     }
     for(const pr of game.projectiles)drawProjectile(c,pr,pr.x-camX,pr.y-camY);
     for(const fx of game.effects)drawEffect(c,fx,fx.x-camX,fx.y-camY);
