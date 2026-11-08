@@ -80,3 +80,44 @@ ou servidor remoto; o progresso é local ao navegador.
 O equilíbrio de hordas usa 2, 3, 4 e 5 inimigos por grupo nas
 fases temporais de `difficulty.js`; vida e velocidade crescem mais
 rapidamente, mantendo o limite de atores renderizados.
+
+## Marcos de nível, minibosses, chefes e recompensas
+
+`src/data/levelMilestones.js` é a fonte única dos marcos de nível.
+`milestoneForLevel(n)` devolve miniboss para múltiplos de cinco que
+não sejam múltiplos de dez, e chefe principal para múltiplos de dez.
+`enemyLevelScaling` eleva a vida, velocidade e dano dos inimigos
+conforme o nível, adicionalmente ao fator temporal de `threatAt`.
+
+`Progression.updateProgression` chama `spawnLevelMilestone` logo ao
+aumentar o nível, antes de pausar para a escolha de melhoria. O
+miniboss/chefe já estará esperando quando a partida for retomada.
+`levelMilestones` é um `Set` por partida: não há spawn duplicado.
+`Enemies.js` reserva lugar na população para um chefe se necessário,
+sem ultrapassar o limite de 170 inimigos. Os antigos spawns de
+chefe por tempo foram desativados, mantendo os três eventos de hordas.
+
+Minibosses são versões ampliadas de espécies comuns com grande aumento
+de PV/XP, corrida telegráfica e bônus de ouro. O Soberano do Eclipse
+usa o Colosso procedural com visual ampliado, investida e rajada
+radial: pausa para avisar antes de disparar 10 projéteis em todas as
+direções (16 abaixo de 50% de PV). `enemyShots` é uma lista separada
+dos projéteis de herói. Seu comprimento é limitado; as colisões
+respeitam armadura, invulnerabilidade e estado terminal da partida.
+
+`Combat.hurt` concede um bônus em `g.bonusGold` quando o chefe
+morre (além de XP e relíquia). Esse bônus não é salvo imediatamente:
+`Game.finish` inclui-o no `recordRun` existente, evitando créditos
+duplicados. `Profile.calculateRunGold` recebe `bonusGold` opcional.
+`Interface.update` reflete o bônus no ouro estimado do HUD e mostra
+a barra superior de PV do chefe principal enquanto ele estiver vivo.
+
+## Paletas temáticas para habilidades
+
+Os dados de `upgrades.js` e `weapons.js` possuem `theme` separado
+do antigo `family`. Ataque usa vermelho/laranja, defesa usa azul,
+utilidade/suporte verde-turquesa. `Progression.createChoices` expõe
+esse tema; a `Interface` aplica `data-theme` com uma categoria textual
+e os estilos CSS diferenciam borda, fundo e destaque (não só cor).
+`MetaShop` segue o mesmo padrão, preservando ícones SVG únicos e
+descrições acessíveis.

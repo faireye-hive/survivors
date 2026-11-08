@@ -9,7 +9,7 @@ RPG de sobrevivência para navegador, **100% Canvas 2D**. Enfrente hordas cresce
 - **Andarilho** — adagas rápidas.
 - WASD ou setas para se mover; joystick no celular. Os ataques são **automáticos**.
 - Colete XP e escolha melhorias ao subir de nível. `Esc` ou `P` pausa o jogo.
-- A partida dura oito minutos, com chefes aos 2:45 e 6:05.
+- A partida dura oito minutos; minibosses aparecem nos níveis 5, 15, 25… e chefes principais nos níveis 10, 20, 30…
 
 ## Conteúdo e encontros
 
@@ -18,7 +18,7 @@ RPG de sobrevivência para navegador, **100% Canvas 2D**. Enfrente hordas cresce
 - **Aranha da Ruína** surge depois de 1:50. Aproxima-se rapidamente em zigue-zague.
 - **Florescimento Sombrio (1:15)**, **Teias das Ruínas (3:15)** e **Eclipse de Éter (5:20)** são três ondas especiais com avisos na tela.
 - **Inimigos de elite** aparecem nessas ondas. Eles têm mais vida e garantem uma **Relíquia**, que restaura 15 PV e aumenta permanentemente o dano em 7% durante a partida. Os bônus acumulam.
-- Os chefes originais e as demais ondas de inimigos continuam funcionando.
+- Os eventos de horda por tempo continuam; os chefes principais agora são acionados por **níveis**, não por minutos.
 - O mapa infinito inclui santuário, prados, bosque, ruínas e regiões corrompidas.
 
 ## Arte e animações
@@ -120,3 +120,28 @@ As quatro fases existentes agora lançam **2, 3, 4 e 5** inimigos por
 grupo, respectivamente (0:00, 1:15, 3:30, 6:00), e as criaturas escalam
 mais rapidamente em vida e velocidade. O limite de 170 inimigos em tela
 continua protegendo o desempenho no mobile.
+
+## Combates de chefe por nível
+
+O relógio ainda controla as ondas normais, mas a dificuldade dos monstros
+também cresce conforme o **nível do herói**, além do tempo sobrevivido.
+
+- **Níveis 5, 15, 25, 35…:** um miniboss gigante de uma espécie comum,
+  com mais vida e XP, investida rápida avisada e **ouro extra** pela derrota.
+- **Níveis 10, 20, 30, 40…:** o **Soberano do Eclipse**, chefe com mais
+  vida, investida e **círculos de projéteis mágicos**. Ele avisa antes da
+  salva; abaixo de 50% de vida lança mais projéteis por vez.
+- O chefe principal exibe **barra de vida com nome, nível e PV no topo**
+  da tela. Minibosses têm barra de PV sobre o monstro mesmo sem dano.
+- Não há duplicação de miniboss no nível 10: todo múltiplo de dez
+  dispara somente o chefe principal.
+- A recompensa de ouro dos chefes derrotados é incluída no ouro da
+  tentativa e **creditada uma vez ao final da partida**; cristais de XP e
+  relíquias também são derrubados ao morrer.
+
+As habilidades de **ataque e armas** usam tons quentes (vermelho e
+laranja). Melhorias de **defesa** usam tons de azul e melhorias de
+**utilidade e suporte**, tons de verde/turquesa. Essa classificação
+aparece no cabeçalho, borda, fundo e ícone das cartas, inclusive no
+celular, e também é aplicada à loja permanente. Os ícones continuam
+únicos e os textos de efeito permanecem acessíveis.

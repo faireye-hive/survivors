@@ -82,7 +82,7 @@ export function spawnLevelMilestone(g,level){
   g.levelMilestones??=new Set();
   if(g.levelMilestones.has(level))return null;
   if(g.enemies.length>=MAX_ENEMIES){
-    const free=g.enemies.findIndex(e=>!e.boss&&!e.miniBoss&&!e.elite);
+    const free=g.enemies.findIndex(e=>!e.boss&&!e.miniBoss);
     if(free<0)return null;
     g.enemies.splice(free,1);
   }
@@ -168,7 +168,7 @@ export function updateEnemies(g,dt){
   const threat=threatAt(g.elapsed);
   if(g.spawnTimer<=0){
     g.spawnTimer=threat.interval;
-    // Packs grow from 1 to 4 during the eight-minute run.
+    // Packs grow from 2 to 5 during the eight-minute run.
     for(let i=0;i<threat.pack&&g.enemies.length<MAX_ENEMIES;i++)spawnEnemy(g);
   }
   triggerEncounters(g);

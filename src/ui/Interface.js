@@ -252,8 +252,8 @@ export class Interface {
     }
     for(const m of markers.enemies){
       const q=toScreen(m);
-      ctx.fillStyle=m.boss?'#ffe0a2':'#ef777a';
-      ctx.beginPath();ctx.arc(q.x,q.y,m.boss?4.1:2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=m.boss?'#ffe0a2':m.miniBoss?'#85e2d9':'#ef777a';
+      ctx.beginPath();ctx.arc(q.x,q.y,m.boss?4.1:m.miniBoss?3.2:2,0,Math.PI*2);ctx.fill();
       if(m.boss){ctx.strokeStyle='#ffcc87';ctx.stroke();}
     }
     ctx.save();ctx.translate(w/2,h/2);
