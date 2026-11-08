@@ -1,6 +1,7 @@
 import { distanceSquared } from '../core/math.js';
 import { STAT_UPGRADES } from '../data/upgrades.js';
 import { WEAPONS } from '../data/weapons.js';
+import {spawnLevelMilestone} from './Enemies.js';
 export function xpForLevel(lv){return Math.round(24+lv*12+lv*lv*2);}
 export function createChoices(g){
   const pool=[];
@@ -71,6 +72,8 @@ export function updateProgression(g,dt){
   if(collected&&g.elapsed-g.lastPickupSound>.15){g.audio.play('pickup');g.lastPickupSound=g.elapsed;}
   if(p.xp>=p.nextXp){
     p.xp-=p.nextXp;p.level++;p.nextXp=xpForLevel(p.level);
+    // Milestone enemies await while the player chooses an upgrade.
+    spawnLevelMilestone(g,p.level);
     g.paused=true;g.pauseReason='level';g.audio.play('level');
     g.ui.showLevel(p.level,createChoices(g));
   }

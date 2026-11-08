@@ -21,7 +21,7 @@ function scenario(level=1){
     enemies:[],enemyShots:[],hazards:[],drops:[],projectiles:[],effects:[],
     particles:[],floatTexts:[],weapons:[],upgrades:{},
     spawnTimer:1000,encountersSeen:new Set(ENCOUNTERS.map(e=>e.id)),
-    levelMilestones:new Set(),bonusGold:0,
+    levelMilestones:new Set(),bonusGold:0,kills:0,
     audio:{play(){}},burst(){},texts:[],
     addText(msg){this.texts.push(msg)},
     finish(){this.state='lost'},

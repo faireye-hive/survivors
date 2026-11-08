@@ -104,12 +104,15 @@ export class Interface {
       const button=document.createElement('button');
       button.className='upgrade-option';button.dataset.upgrade=choice.id;
       button.dataset.family=choice.family;
+      button.dataset.theme=choice.theme;
       button.style.setProperty('--upgrade-accent',choice.accent);
       button.setAttribute('aria-label',
         choice.name+'. '+choice.effect+'. '+choice.description+'. '+choice.tier);
       const category=document.createElement('span');
       category.className='upgrade-kind';
-      category.textContent=choice.family==='weapon'?'ARMA':'ATRIBUTO';
+      category.textContent={
+        attack:'⚔ ATAQUE',defense:'⬡ DEFESA',utility:'✧ UTILIDADE'
+      }[choice.theme]||'MELHORIA';
       const icon=document.createElement('span');
       icon.className='upgrade-icon';
       icon.appendChild(createUpgradeIcon(choice.id));
@@ -285,7 +288,8 @@ export class Interface {
     this.el['xp-fill'].parentElement.setAttribute('aria-valuemax',String(s.nextXp));
     this.el['time-label'].textContent=formatTime(s.elapsed);
     this.el['run-gold-preview'].textContent=calculateRunGold({
-      level:s.level,kills:s.kills,time:s.elapsed
+      level:s.level,kills:s.kills,time:s.elapsed,
+      bonusGold:game.bonusGold||0
     }).toLocaleString('pt-BR');
     this.el['kills-label'].textContent=game.enemies.filter(e=>e.hp>0).length;
     const mainBoss=game.enemies.find(e=>e.boss&&e.hp>0);

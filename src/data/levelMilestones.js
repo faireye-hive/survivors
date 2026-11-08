@@ -17,7 +17,7 @@ export function milestoneForLevel(level){
 export function miniBossType(level){
   // Deterministic cycle, each mini is a large version of a normal species.
   const types=['skeleton','spider','spore','wraith'];
-  return types[(Math.floor(level/5)-1)%types.length];
+  return types[Math.floor((level-5)/10)%types.length];
 }
 export function enemyLevelScaling(level=1){
   const lv=Math.max(0,Math.min(100,Math.floor(Number(level)||1)-1));
