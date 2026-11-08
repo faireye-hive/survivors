@@ -66,6 +66,17 @@
           <button id="pause-button" class="icon-button" aria-label="Pausar partida" title="Pausar (Esc)">Ⅱ</button>
         </div>
       </div>
+      <div id="boss-health" class="boss-health" hidden aria-label="Vida do chefe principal">
+        <div class="boss-health-head">
+          <span>☄ CHEFE · <strong id="boss-health-name">Soberano do Eclipse</strong></span>
+          <span id="boss-health-level">Nv. 10</span>
+        </div>
+        <div class="boss-health-track" role="progressbar" aria-label="Vida do chefe"
+          aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+          <span id="boss-health-fill"></span>
+        </div>
+        <span id="boss-health-numbers" class="boss-health-numbers">1000 / 1000 PV</span>
+      </div>
       <nav class="hud-rail panel" aria-label="Ferramentas da partida">
         <button type="button" class="hud-nav-button" id="hud-skills-button" data-hud-panel="skills" aria-expanded="false" title="Habilidades automáticas">✦<span class="sr-only">Habilidades</span></button>
         <button type="button" class="hud-nav-button" id="hud-map-button" title="Ampliar o minimapa" aria-pressed="false">◈<span class="sr-only">Mapa</span></button>

@@ -36,6 +36,7 @@ export function renderShopGrid(container,profile,doc=globalThis.document){
     card.type='button';card.className='meta-upgrade-card';
     card.dataset.metaUpgrade=id;card.dataset.maxed=String(maxed);
     card.dataset.affordable=String(affordable);
+    card.dataset.theme=def.theme;
     card.style.setProperty('--meta-accent',def.color);
     card.disabled=maxed;
     const art=doc.createElement('span');art.className='meta-upgrade-icon';

@@ -2,6 +2,7 @@ import { ENEMIES } from '../data/enemies.js';
 import {ENCOUNTERS,chooseEncounterType} from '../data/encounters.js';
 import { distanceSquared } from '../core/math.js';
 import {threatAt} from '../data/difficulty.js';
+import {milestoneForLevel,miniBossType,enemyLevelScaling} from '../data/levelMilestones.js';
 
 const MAX_ENEMIES=170;
 const MAX_HAZARDS=24;
@@ -24,20 +25,29 @@ export function spawnEnemy(g,type=randomEnemyType(g.elapsed),options={}){
   const threat=threatAt(g.elapsed);
   const radius=options.radius??(Math.max(g.width,g.height)*threat.spawnRadiusFactor+100);
   const difficulty=threat.health;
-  const elite=!!options.elite&&!spec.boss;
-  const health=Math.ceil(spec.hp*difficulty*(elite?3.6:1));
+  const miniBoss=!!options.miniBoss;
+  const boss=!!spec.boss||!!options.mainBoss;
+  const elite=!!options.elite&&!boss&&!miniBoss;
+  const levelScale=enemyLevelScaling(g.player.level);
+  const milestone=options.milestoneLevel||0;
+  const health=Math.ceil(spec.hp*difficulty*levelScale.health*
+    (boss?(1.75+milestone*.045):miniBoss?(4.5+milestone*.1):elite?3.6:1));
   const enemy={
-    id:++enemyId,type,boss:!!spec.boss,elite,
+    id:++enemyId,type,boss,miniBoss,elite,
+    milestoneLevel:milestone,bountyGold:options.bountyGold||0,
+    name:boss?'Soberano do Eclipse':miniBoss?'Caçador de Elite · '+spec.name:spec.name,
     x:g.player.x+Math.cos(angle)*radius,
     y:g.player.y+Math.sin(angle)*radius,
-    radius:spec.radius*(elite?1.2:1),
+    radius:spec.radius*(boss?1.35:miniBoss?1.75:elite?1.2:1),
     hp:health,maxHp:health,
-    speed:spec.speed*threat.speed*(elite?1.12:1),
-    damage:spec.damage+threat.damage+(elite?4:0),
-    xp:spec.xp*(elite?3:1),hit:0,vx:0,vy:0,
+    speed:spec.speed*threat.speed*levelScale.speed*(miniBoss?1.13:elite?1.12:1),
+    damage:spec.damage+threat.damage+levelScale.damage+(boss?10:miniBoss?6:elite?4:0),
+    xp:Math.ceil(spec.xp*(boss?15:miniBoss?9:elite?3:1)),
+    hit:0,vx:0,vy:0,
     sporeTimer:2.3+(enemyId%4)*.47,
     rushCooldown:4.1+(enemyId%3)*.6,rushWarmup:0,rushTime:0,
-    rushVx:0,rushVy:0
+    rushVx:0,rushVy:0,
+    novaCooldown:2.3,novaWarmup:0,novaAngle:0
   };
   g.enemies.push(enemy);
   return enemy;
@@ -60,6 +70,75 @@ export function triggerEncounters(g){
     // Notify at the HUD rather than spawning a blocking modal in combat.
     g.addText('✦ '+event.title,g.player.x,g.player.y-83,'#f6db9d');
   }
+}
+
+/**
+ * Spawn one milestone monster for each qualifying level. If the field
+ * is full, make room by removing an ordinary creature, never a reward boss.
+ */
+export function spawnLevelMilestone(g,level){
+  const milestone=milestoneForLevel(level);
+  if(!milestone)return null;
+  g.levelMilestones??=new Set();
+  if(g.levelMilestones.has(level))return null;
+  if(g.enemies.length>=MAX_ENEMIES){
+    const free=g.enemies.findIndex(e=>!e.boss&&!e.miniBoss&&!e.elite);
+    if(free<0)return null;
+    g.enemies.splice(free,1);
+  }
+  const type=milestone.kind==='boss'?'colossus':miniBossType(level);
+  const e=spawnEnemy(g,type,{
+    miniBoss:milestone.kind==='mini',
+    mainBoss:milestone.kind==='boss',
+    milestoneLevel:level,bountyGold:milestone.bonusGold,
+    radius:Math.max(g.width,g.height)*.51+95,
+    angle:Math.PI*.65
+  });
+  if(!e)return null;
+  g.levelMilestones.add(level);
+  g.eventBanner={title:milestone.title+' · Nv. '+level,
+    subtitle:milestone.subtitle,remaining:4.5};
+  g.addText('✦ '+milestone.title,g.player.x,g.player.y-86,'#f5c987');
+  return e;
+}
+
+const MAX_BOSS_SHOTS=100;
+/** A radial wave telegraphed by a pulsing amber ring. */
+export function fireBossNova(g,e){
+  g.enemyShots??=[];
+  const enrage=e.hp<=e.maxHp*.5;
+  const count=enrage?16:10;
+  if(g.enemyShots.length+count>MAX_BOSS_SHOTS)return 0;
+  const speed=(enrage?190:155)+Math.min(40,(e.milestoneLevel||10)*2);
+  const offset=e.novaAngle||0;
+  for(let i=0;i<count;i++){
+    const a=offset+i*Math.PI*2/count;
+    g.enemyShots.push({
+      x:e.x,y:e.y-18,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
+      radius:7,life:3.8,damage:Math.ceil(e.damage*.62),
+      kind:'nova',owner:e.id
+    });
+  }
+  e.novaAngle=offset+Math.PI/count;
+  g.burst(e.x,e.y,'#eeabdb',Math.min(count,18));
+  return count;
+}
+/** Player-collision updates for enemy bullets, separated from hero weapons. */
+export function updateEnemyShots(g,dt){
+  g.enemyShots??=[];
+  const p=g.player;
+  for(const shot of g.enemyShots){
+    shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;shot.life-=dt;
+    if(shot.life<=0||p.inv>0)continue;
+    if(distanceSquared(shot,p)>(shot.radius+p.radius*.65)**2)continue;
+    shot.life=0;
+    const damage=Math.max(1,shot.damage-p.armor);
+    p.hp=Math.max(0,p.hp-damage);p.inv=.7;
+    g.addText('-'+damage,p.x,p.y-55,'#faa6d5');
+    g.audio.play('hit');g.burst(p.x,p.y,'#f2b6dc',7);
+    if(p.hp<=0){g.finish(false);break;}
+  }
+  g.enemyShots=g.enemyShots.filter(s=>s.life>0);
 }
 
 export function updateHazards(g,dt){
@@ -93,8 +172,7 @@ export function updateEnemies(g,dt){
     for(let i=0;i<threat.pack&&g.enemies.length<MAX_ENEMIES;i++)spawnEnemy(g);
   }
   triggerEncounters(g);
-  if(g.elapsed>=165&&!g.bossFlags.first){g.bossFlags.first=true;spawnEnemy(g,'colossus');}
-  if(g.elapsed>=365&&!g.bossFlags.second){g.bossFlags.second=true;spawnEnemy(g,'colossus');}
+  // Bosses are now triggered by levels 5, 10, 15, ... — not timers.
 
   const p=g.player;
   for(const e of g.enemies){
@@ -106,10 +184,15 @@ export function updateEnemies(g,dt){
     const slow=e.type==='spore'&&dist<135?.52:1;
     e.vx=(dx*forward-dy/dist*orbit)*slow;
     e.vy=(dy*forward+dx/dist*orbit)*slow;
-    if(e.boss){
-      // A visible charge gives slow bosses a meaningful threat while
-      // leaving a 0.7s warning and enough time to dodge.
-      if(e.rushWarmup>0){
+    if(e.boss||e.miniBoss){
+      // Fast lunge for minibosses; mains alternate lunge and radial nova.
+      if(e.boss&&e.novaWarmup>0){
+        e.novaWarmup-=dt;e.vx=0;e.vy=0;
+        if(e.novaWarmup<=0){
+          fireBossNova(g,e);
+          e.novaCooldown=4.8;
+        }
+      }else if(e.rushWarmup>0){
         e.rushWarmup-=dt;e.vx=0;e.vy=0;
         if(e.rushWarmup<=0){
           e.rushTime=.72;
@@ -120,8 +203,14 @@ export function updateEnemies(g,dt){
         e.rushTime-=dt;e.vx=e.rushVx;e.vy=e.rushVy;
       }else{
         e.rushCooldown-=dt;
-        if(e.rushCooldown<=0&&dist<470){
-          e.rushWarmup=.7;e.rushCooldown=5.6;
+        if(e.boss)e.novaCooldown-=dt;
+        if(e.boss&&e.novaCooldown<=0&&dist<570){
+          e.novaWarmup=.85;
+          e.rushCooldown=Math.max(e.rushCooldown,1.5);
+          e.vx=0;e.vy=0;
+        }else if(e.rushCooldown<=0&&dist<470){
+          e.rushWarmup=e.miniBoss?.55:.7;
+          e.rushCooldown=e.miniBoss?4.4:5.6;
           e.vx=0;e.vy=0;
         }
       }
@@ -150,10 +239,13 @@ export function updateEnemies(g,dt){
   }
   if(g.state!=='playing')return;
   updateHazards(g,dt);
+  if(g.state!=='playing')return;
+  updateEnemyShots(g,dt);
+  if(g.state!=='playing')return;
   if(g.eventBanner){
     g.eventBanner.remaining-=dt;
     if(g.eventBanner.remaining<=0)g.eventBanner=null;
   }
   const limit=(Math.max(g.width,g.height)*1.8+600)**2;
-  g.enemies=g.enemies.filter(e=>e.hp>0&&(e.boss||distanceSquared(e,p)<limit));
+  g.enemies=g.enemies.filter(e=>e.hp>0&&(e.boss||e.miniBoss||distanceSquared(e,p)<limit));
 }

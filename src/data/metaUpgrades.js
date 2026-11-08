@@ -3,22 +3,22 @@
  * Upgrades are applied once when starting a new run, never mid-fight.
  */
 export const META_UPGRADES=Object.freeze({
-  vitality:Object.freeze({name:'Vigor eterno',icon:'stat:vitality',color:'#f0a7b6',
+  vitality:Object.freeze({theme:'defense',name:'Vigor eterno',icon:'stat:vitality',color:'#80baf7',
     glyph:'♥',effect:'+15 PV iniciais',description:'Aumenta a vida máxima em todas as próximas partidas.',
     baseCost:65,growth:1.55,maxLevel:8}),
-  power:Object.freeze({name:'Poder ancestral',icon:'stat:might',color:'#f1a58d',
+  power:Object.freeze({theme:'attack',name:'Poder ancestral',icon:'stat:might',color:'#ff8667',
     glyph:'✊',effect:'+6% dano inicial',description:'Fortalece todas as armas desde o início da partida.',
     baseCost:85,growth:1.6,maxLevel:8}),
-  defense:Object.freeze({name:'Armadura rúnica',icon:'stat:armor',color:'#a9cafd',
+  defense:Object.freeze({theme:'defense',name:'Armadura rúnica',icon:'stat:armor',color:'#83aaff',
     glyph:'⬡',effect:'+1 armadura inicial',description:'Reduz o dano recebido em qualquer classe.',
     baseCost:100,growth:1.7,maxLevel:5}),
-  mobility:Object.freeze({name:'Botas do vento',icon:'stat:haste',color:'#94e8cf',
+  mobility:Object.freeze({theme:'utility',name:'Botas do vento',icon:'stat:haste',color:'#5dd6b1',
     glyph:'➤',effect:'+4% velocidade',description:'Aumenta a mobilidade em novas tentativas.',
     baseCost:70,growth:1.55,maxLevel:8}),
-  reach:Object.freeze({name:'Atração de Éter',icon:'stat:magnet',color:'#cbb5ff',
+  reach:Object.freeze({theme:'utility',name:'Atração de Éter',icon:'stat:magnet',color:'#71cfe5',
     glyph:'∩',effect:'+20 alcance de coleta',description:'Atrai cristais de experiência de mais longe.',
     baseCost:55,growth:1.5,maxLevel:6}),
-  wisdom:Object.freeze({name:'Sabedoria acumulada',icon:'meta:wisdom',color:'#e4c88b',
+  wisdom:Object.freeze({theme:'utility',name:'Sabedoria acumulada',icon:'meta:wisdom',color:'#92e0ac',
     glyph:'✧',effect:'+9% experiência',description:'Faz subir de nível mais rapidamente em novas partidas.',
     baseCost:80,growth:1.6,maxLevel:8})
 });
