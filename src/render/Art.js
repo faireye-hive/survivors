@@ -1,4 +1,5 @@
 import {drawRigActor} from './characters/RigRenderer.js';
+import {drawWildCreature} from './characters/WildCreatures.js';
 
 // Shared Canvas 2D art style: heroes and monsters use the same articulated rig.
 const PI2=Math.PI*2;
@@ -12,11 +13,19 @@ export function drawPlayer(c,p,x,y,t,options={}){
 export function drawEnemy(c,e,x,y,t){
   c.save();
   const float=e.type==='bat'||e.type==='wraith'?Math.sin(t*7+e.id)*3:Math.sin(t*3+e.id)*1.2;
-  drawRigActor(c,e,x,y+float,t,{id:'monster.'+e.type});
+  if(!drawWildCreature(c,e,x,y+float,t)){
+    drawRigActor(c,e,x,y+float,t,{
+      id:'monster.'+e.type,scale:e.elite?1.2:1
+    });
+  }
+  if(e.elite){
+    c.strokeStyle='#e8c88588';c.lineWidth=1.5;
+    c.beginPath();c.ellipse(x,y-19,e.radius*1.9,e.radius*2.5,0,0,PI2);c.stroke();
+  }
   if(e.hp>0&&e.hp<e.maxHp){
     const w=Math.max(32,e.radius*2);
     c.fillStyle='#111d27';c.fillRect(x-w/2,y-e.radius*3.6,w,4);
-    c.fillStyle=e.boss?'#f2cd7e':'#ed8b91';
+    c.fillStyle=e.boss?'#f2cd7e':e.elite?'#f5d196':'#ed8b91';
     c.fillRect(x-w/2,y-e.radius*3.6,w*Math.max(0,e.hp/e.maxHp),4);
   }
   c.restore();
@@ -27,6 +36,15 @@ export function drawDrop(c,d,x,y,t){
   if(d.kind==='heal'){
     circle(c,0,-6,11,'#ba657b');circle(c,-4,-10,4,'#eab3c2');
     line(c,[[-5,-6],[5,-6]],'#fff4e8',3);line(c,[[0,-11],[0,-1]],'#fff4e8',3);
+  }else if(d.kind==='relic'){
+    circle(c,0,-9,15,'#8e6d3f88');
+    const points=Array.from({length:10},(_,i)=>{
+      const a=i*Math.PI/5-Math.PI/2,r=i%2?6:13;
+      return [Math.cos(a)*r,Math.sin(a)*r-9];
+    });
+    polygon(c,points,'#f1c67e');
+    polygon(c,points.map(([px,py])=>[px*.57,py*.62-3.5]),'#fff3c6');
+    circle(c,-2,-13,2,'#ffffff');
   }else{
     c.scale(d.value>30?1.3:1,d.value>30?1.3:1);
     polygon(c,[[0,-19],[8,-8],[5,4],[-5,4],[-8,-8]],'#47bccc');
@@ -53,4 +71,29 @@ export function drawEffect(c,fx,x,y){
     c.strokeStyle='#8affdb';c.lineWidth=6*f;c.beginPath();c.arc(0,0,fx.radius*(1.25-f*.25),0,PI2);c.stroke();
     c.strokeStyle='#d4c5f9';c.lineWidth=2*f;c.beginPath();c.arc(0,0,fx.radius*.7,0,PI2);c.stroke();
   }c.restore();
+}
+
+/** Spore pools telegraph before dealing damage. Draw behind enemies. */
+export function drawHazard(c,h,x,y,t=0){
+  if(h.life<=0)return;
+  const warning=h.warmup>0;
+  const opacity=warning?.22+.12*Math.sin(t*12):.32+.08*Math.sin(t*5);
+  c.save();c.translate(x,y);
+  c.globalAlpha=Math.max(.08,Math.min(.52,opacity));
+  c.fillStyle=warning?'#d8c180':'#a3cc78';
+  c.beginPath();c.ellipse(0,0,h.radius,h.radius*.65,0,0,PI2);c.fill();
+  c.globalAlpha=warning?.85:.66;
+  c.strokeStyle=warning?'#ffe29d':'#d4ef9f';
+  c.lineWidth=warning?2:3;
+  c.setLineDash(warning?[6,5]:[]);
+  c.beginPath();c.ellipse(0,0,h.radius,h.radius*.65,0,0,PI2);c.stroke();
+  c.setLineDash([]);
+  if(!warning){
+    for(let i=0;i<7;i++){
+      const a=i*PI2/7+t*.8;
+      circle(c,Math.cos(a)*h.radius*.72,Math.sin(a)*h.radius*.38-4,
+        2+(i%3),'#dcf4ab');
+    }
+  }
+  c.restore();
 }

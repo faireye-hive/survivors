@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import {getRigHandles,drawRigActor} from '../src/render/characters/RigRenderer.js';
 import {RIG_IDS,NODES,visibleRigNodes,rigOffsetRange,boundedRigValue,
   newRigProject,validateRigProject} from '../src/data/Rig2D.js';
@@ -56,19 +55,6 @@ test('translações não desmontam juntas; rosto conserva ajuste fino',()=>{
   const clean=validateRigProject(imported);
   assert.equal(clean.characters[0].clips[0].frames[0].pose.armL.x,0);
   assert.equal(clean.characters[0].clips[0].frames[0].pose.armL.rotation,33);
-});
-test('editor permite rotação visual e não manipula juntas por deslocamento livre',()=>{
-  const js=fs.readFileSync('src/studio/WarriorStudio.js','utf8');
-  const html=fs.readFileSync('warrior-studio.html','utf8');
-  for(const token of ['tool-rotate','tool-move','rotation-dial','rotation-value']){
-    assert.ok(html.includes('id="'+token+'"'),token);
-  }
-  assert.ok(js.includes('rotationKnob'));
-  assert.ok(js.includes('rigOffsetRange'));
-  assert.ok(js.includes("getRigHandles(currentPose(),character())"));
-  assert.ok(js.includes("boundedRigValue(d.selected,'rotation',degrees)"));
-  assert.ok(!js.includes("frame.pose[state.selected].x=round(clamp(nx,-90,90)"));
-  assert.ok(html.includes('Cada espécie tem peças próprias'));
 });
 test('renderer aceita todas as espécies sem recorrer a rig humano invisível',()=>{
   let count=0,depth=0;

@@ -34,6 +34,7 @@ export class Game {
     this.frameDt=0;this.elapsed=0;this.kills=0;this.spawnTimer=.7;this.lastPickupSound=-10;
     this.bossFlags={first:false,second:false};
     this.enemies=[];this.drops=[];this.projectiles=[];this.effects=[];this.particles=[];this.floatTexts=[];
+    this.hazards=[];this.encountersSeen=new Set();this.eventBanner=null;this.relics=0;
     this.upgrades={};this.weapons=[{id:hero.weapon,level:1,cooldown:.2}];
     this.currentChoices=null;this.paused=false;this.pauseReason=null;this.input.reset();
   }

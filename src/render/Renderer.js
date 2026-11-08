@@ -1,4 +1,4 @@
-import { drawPlayer, drawEnemy, drawDrop, drawProjectile, drawEffect } from './Art.js';
+import { drawPlayer, drawEnemy, drawDrop, drawProjectile, drawEffect,drawHazard } from './Art.js';
 
 // All gameplay visuals use the same CanvasRenderingContext2D.
 export class Renderer {
@@ -10,6 +10,12 @@ export class Renderer {
     c.fillStyle='#17312d';c.fillRect(0,0,w,h);
     const camX=p.x-w/2,camY=p.y-h/2;
     game.world.draw(c,camX,camY,w,h,game.elapsed);
+    // Persistent environmental threats sit on the ground behind actors.
+    for(const h of game.hazards||[]){
+      const x=h.x-camX,y=h.y-camY;
+      if(x>-h.radius&&y>-h.radius&&x<w+h.radius&&y<h+h.radius)
+        drawHazard(c,h,x,y,game.elapsed);
+    }
     const aura=game.weapons.find(v=>v.id==='aura');
     if(aura){c.strokeStyle='#90d8bb44';c.lineWidth=2;c.beginPath();c.arc(w/2,h/2,92+aura.level*11,0,Math.PI*2);c.stroke();}
     for(const drop of game.drops){
@@ -44,5 +50,25 @@ export class Renderer {
     const vignette=c.createRadialGradient(w/2,h/2,Math.min(w,h)*.25,w/2,h/2,Math.max(w,h)*.75);
     vignette.addColorStop(0,'#00000000');vignette.addColorStop(1,'#050a1788');
     c.fillStyle=vignette;c.fillRect(0,0,w,h);
+    // Time-limited wave announcements, never modal: auto attacks and
+    // movement remain usable during every encounter.
+    const banner=game.eventBanner;
+    if(banner?.remaining>0){
+      c.save();
+      c.globalAlpha=Math.min(1,banner.remaining,.8+Math.min(1,4-banner.remaining));
+      const bw=Math.min(w-28,440),bx=(w-bw)/2,by=Math.min(160,h*.23);
+      c.fillStyle='#0b2033df';
+      c.fillRect(bx,by,bw,61);
+      c.strokeStyle='#d7bd7a';c.lineWidth=1.5;
+      c.strokeRect(bx+.5,by+.5,bw-1,60);
+      c.textAlign='center';
+      c.fillStyle='#f6db9e';
+      c.font='bold 17px Georgia, serif';
+      c.fillText(banner.title,w/2,by+24,bw-20);
+      c.font='12px system-ui,sans-serif';
+      c.fillStyle='#e2e6d1';
+      c.fillText(banner.subtitle,w/2,by+45,bw-20);
+      c.restore();
+    }
   }
 }

@@ -52,6 +52,14 @@ export function updateProgression(g,dt){
     if(distanceSquared(d,p)<(p.radius+13)**2){
       if(d.kind==='heal'){
         p.hp=Math.min(p.maxHp,p.hp+d.value);g.addText('+'+d.value+' PV',p.x,p.y-55,'#8cf2b3');
+      }else if(d.kind==='relic'){
+        // Guaranteed elite reward: a small permanent damage bonus for
+        // the current run, without a blocking upgrade-selection screen.
+        g.relics=(g.relics||0)+1;
+        p.might*=1.07;
+        p.hp=Math.min(p.maxHp,p.hp+15);
+        g.addText('✦ RELÍQUIA · +7% DANO',p.x,p.y-65,'#f9da8d');
+        g.burst(p.x,p.y,'#f9d18a',12);
       }else p.xp+=d.value;
       d.life=0;collected=true;
     }

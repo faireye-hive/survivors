@@ -149,11 +149,14 @@ export class Interface {
       add('p','Melhor tempo: '+(best.runs?formatTime(best.bestTime):'—'));
       add('p','Maior número de derrotas: '+(best.bestKills||0));
       add('p','Partidas concluídas: '+(best.runs||0));
+      add('p','Relíquias desta partida: '+(game.relics||0));
     }else if(type==='help'){
       this.el['hud-info-title'].textContent='Como jogar';
       add('p','WASD ou teclas de seta: movimentar.');
       add('p','As habilidades atacam automaticamente quando estão prontas. Não há botão de ataque.');
       add('p','Pegue os cristais de experiência. Ao subir de nível, escolha uma melhoria.');
+      add('p','A partir de 01:00 surgem Esporões que criam áreas tóxicas no chão: saia dos círculos antes de eles ativarem.');
+      add('p','Aranhas avançam em zigue-zague. Derrote inimigos de elite dourados para coletar relíquias que aumentam seu dano.');
       add('p','Esc ou P: pausar. O minimapa exibe inimigos próximos e a sua posição.');
     }
   }
@@ -186,8 +189,9 @@ export class Interface {
     }
     for(const m of markers.drops){
       const q=toScreen(m);
-      ctx.fillStyle=m.heal?'#9bf0b0':'#d2d697';
-      ctx.fillRect(q.x-1.2,q.y-1.2,2.4,2.4);
+      ctx.fillStyle=m.relic?'#ffe09a':m.heal?'#9bf0b0':'#d2d697';
+      const size=m.relic?4.1:2.4;
+      ctx.fillRect(q.x-size/2,q.y-size/2,size,size);
     }
     for(const m of markers.enemies){
       const q=toScreen(m);

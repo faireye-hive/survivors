@@ -14,6 +14,7 @@ function hurt(g,e,damage){
   g.burst(e.x,e.y,e.boss?'#ebc780':'#a5e2c5',3);
   if(e.hp<=0){
     g.kills++;g.drops.push({x:e.x,y:e.y,kind:'xp',value:e.xp,life:80});
+    if(e.elite)g.drops.push({x:e.x+12,y:e.y-8,kind:'relic',value:1,life:90});
     if(Math.random()<.028)g.drops.push({x:e.x+14,y:e.y,kind:'heal',value:20,life:65});
     g.burst(e.x,e.y,'#bceab5',8);
   }
