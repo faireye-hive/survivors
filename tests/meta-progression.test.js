@@ -133,7 +133,7 @@ test('nova partida usa todos os atributos permanentes do mesmo perfil',()=>{
       assert.ok(Math.abs(mock.player.might-hero.might*1.12)<1e-9);
       assert.ok(Math.abs(mock.player.speed-hero.speed*1.12)<1e-9);
       assert.equal(mock.player.magnet,114);
-      assert.equal(mock.player.experienceGain,1.36);
+      assert.ok(Math.abs(mock.player.experienceGain-1.36)<1e-9);
       assert.equal(mock.goldEarned,0);
       assert.equal(mock.upgrades.vitality,undefined,
         'melhorias de nível continuam separadas das permanentes');
@@ -199,7 +199,7 @@ test('loja desenha seis cartas responsivas com preços e níveis reais',()=>{
   assert.deepEqual(root.children.map(b=>b.dataset.metaUpgrade),META_IDS);
   for(const button of root.children){
     assert.equal(button.tag,'button');
-    assert.equal(button.disabled,false);
+    assert.ok(!button.disabled);
     assert.ok(button.attrs['aria-label'].includes('Comprar por'));
     assert.equal(button.children.length,3);
   }
