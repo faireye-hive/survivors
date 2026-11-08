@@ -41,12 +41,12 @@ test('ameaça aumenta em 4 fases e mantém uma evolução sem saltos bruscos de 
   assert.deepEqual(threatAt(999),threatAt(480));
 });
 
-test('o mesmo monstro surge mais próximo, rápido e resistente conforme o tempo avança',()=>{
+test('HP comum depende do nível, não do relógio; velocidade e dano ainda sobem',()=>{
   const early=game(0),late=game(450);
   const a=spawnEnemy(early,'spider',{angle:0});
   const b=spawnEnemy(late,'spider',{angle:0});
   assert.ok(a.x<800*.49+100,'distância inicial menor que a versão anterior');
-  assert.ok(b.hp>=a.hp*3);
+  assert.equal(b.maxHp,a.maxHp,'mesmo nível deve ter o mesmo HP em qualquer minuto');
   assert.ok(b.speed>a.speed);
   assert.ok(b.damage>a.damage);
   assert.equal(a.type,'spider');

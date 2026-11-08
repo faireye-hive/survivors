@@ -65,7 +65,7 @@ A dificuldade avança em **quatro fases** ao longo dos oito minutos:
 - **3:30 — Cerco:** grupos de três, monstros mais resistentes e mais próximos do jogador.
 - **6:00 — Caos:** grupos de quatro, surgimentos mais frequentes e pressão contínua.
 
-A vida, velocidade e dano dos inimigos crescem gradualmente com o relógio.
+A velocidade e o dano dos inimigos crescem gradualmente com o relógio. A **vida dos monstros comuns** depende apenas do nível do herói, com ganho acumulativo de 5% por nível.
 Os chefes podem realizar uma **investida**, precedida por um círculo dourado
 de aviso por 0,7 segundo: afaste-se da trajetória para desviar.
 
@@ -116,10 +116,14 @@ entre dispositivos. Limpar os dados do site também apaga o progresso.
 
 ### Pressão de hordas maior
 
-As quatro fases existentes agora lançam **2, 3, 4 e 5** inimigos por
-grupo, respectivamente (0:00, 1:15, 3:30, 6:00), e as criaturas escalam
-mais rapidamente em vida e velocidade. O limite de 170 inimigos em tela
-continua protegendo o desempenho no mobile.
+As quatro fases por tempo lançam **2, 3, 4 e 5** inimigos por
+grupo como quantidade **inicial**, respectivamente (0:00, 1:15, 3:30, 6:00).
+**Cada nível do herói acrescenta mais um monstro a cada grupo**:
+no primeiro estágio, são 2 no nível 1, 6 no nível 5, 11 no nível 10 e
+21 no nível 20. O grupo chega até **24 monstros**; o limite de 170
+inimigos simultâneos continua protegendo o desempenho no mobile.
+O intervalo entre grupos também diminui progressivamente, e monstros
+são distribuídos em círculo ao redor do jogador.
 
 ## Combates de chefe por nível
 
@@ -145,3 +149,28 @@ laranja). Melhorias de **defesa** usam tons de azul e melhorias de
 aparece no cabeçalho, borda, fundo e ícone das cartas, inclusive no
 celular, e também é aplicada à loja permanente. Os ícones continuam
 únicos e os textos de efeito permanecem acessíveis.
+
+### Vida dos monstros comuns: +5% por nível
+
+A cada nível do jogador, a vida máxima de **todos os monstros comuns**
+aumenta **5% sobre o valor do nível anterior**, multiplicativamente:
+`HP(nível) = HP_base × 1,05^(nível − 1)`.
+
+| Nível do jogador | Multiplicador de HP comum |
+|---|---|
+| 1 | 1,00× |
+| 5 | 1,22× |
+| 10 | 1,55× |
+| 20 | 2,53× |
+| 30 | 4,12× |
+
+O aumento também afeta monstros já presentes, mantendo a proporção da
+vida que lhes restava. O relógio **não multiplica HP de monstros comuns**:
+somente os chefes/minibosses mantêm multiplicadores especiais de vida.
+Por isso a pressão dos monstros comuns depende do nível e da quantidade,
+mesmo sem enfrentar um chefe.
+
+Os limites de aparição (24 por grupo, 170 simultâneos) são limites
+técnicos, não níveis máximos do personagem. A curva pretende tornar as
+melhorias temporárias e permanentes cada vez mais importantes; o
+equilíbrio exato deve ser avaliado jogando com diferentes classes.
