@@ -56,3 +56,28 @@ Abra `http://localhost:3000`. O workflow do GitHub Pages publica a partir da bra
 - `tests/`: testes de jogabilidade, desenho e dados de animação.
 
 Consulte `docs/ARCHITECTURE.md` para detalhes técnicos.
+
+## Equilíbrio mais desafiador
+
+A dificuldade avança em **quatro fases** ao longo dos oito minutos:
+- **0:00 — Calmaria:** grupos de um inimigo, com criaturas mais rápidas que na versão anterior.
+- **1:15 — Invasão:** grupos de dois inimigos, além dos encontros especiais já previstos.
+- **3:30 — Cerco:** grupos de três, monstros mais resistentes e mais próximos do jogador.
+- **6:00 — Caos:** grupos de quatro, surgimentos mais frequentes e pressão contínua.
+
+A vida, velocidade e dano dos inimigos crescem gradualmente com o relógio.
+Os chefes podem realizar uma **investida**, precedida por um círculo dourado
+de aviso por 0,7 segundo: afaste-se da trajetória para desviar.
+
+## Escolha visual de melhorias
+
+As seis melhorias de atributo e as quatro armas agora têm **10 ícones SVG
+exclusivos**, desenhados no código, sem dependência de bibliotecas de ícones.
+A tela de evolução destaca o efeito com uma etiqueta curta e cor própria:
+`+15% DANO`, `+25 VIDA MÁX.`, `+9% VELOCIDADE`, `+34 ALCANCE XP`,
+`+2 ARMADURA`, `+40 PV AGORA` e ataques identificados pela silhueta.
+No celular, a descrição longa fica oculta visualmente, mas permanece
+acessível por leitor de tela.
+
+Os valores das melhorias e das armas continuam os mesmos; a dificuldade
+aumentou principalmente pela pressão crescente das hordas.

@@ -29,3 +29,26 @@ Os dados previamente gravados em `cronicas.2d.rigs.v1` continuam legíveis para 
 ## Validação
 
 `npm test` executa verificações do gameplay, encontros, renderização 2D, upgrades, movimento, anatomia dos personagens e dados de caminhada. `npm run build` gera o site estático em `dist/`. O workflow do GitHub publica esse artefato no GitHub Pages.
+
+## Fases de dificuldade e comunicação visual
+
+`src/data/difficulty.js` centraliza `threatAt(seconds)`: número de
+monstros por grupo, intervalo de surgimento, escala de vida, escala de
+velocidade e bônus de dano. O valor máximo do relógio é 480 segundos,
+prevenindo extrapolação após a vitória. As fases começam em 0, 75,
+210 e 360 segundos. `Enemies.js` usa a mesma curva tanto para
+`spawnEnemy` quanto para `updateEnemies`, evitando divergência de
+dificuldade e limites de população. O cap existente continua 170.
+
+O Guardião da Névoa conta com investidas: antes de acelerar, ele fica
+parado durante 0,7 segundo enquanto `Art.js` desenha um círculo
+telegráfico dourado; a investida dura 0,72 segundo. Esse comportamento
+é exclusivo dos chefes, sem modificar colisões de ataque básicas.
+
+`src/ui/UpgradeIcons.js` guarda dez formas vetoriais distintas,
+identificadas pelos IDs das armas e atributos. `createUpgradeIcon`
+usa exclusivamente `createElementNS` com caminhos estáticos (sem
+`innerHTML`). `Progression.createChoices` oferece rótulo de efeito
+curto, cor e grupo; `Interface.showLevel` combina ícone, efeito em
+destaque e descrição secundária sem alterar `applyChoice`.
+No HUD desktop, o indicador AMEAÇA mostra o nível atual da curva.

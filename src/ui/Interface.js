@@ -168,6 +168,8 @@ export class Interface {
       add('p','Pegue os cristais de experiência. Ao subir de nível, escolha uma melhoria.');
       add('p','A partir de 01:00 surgem Esporões que criam áreas tóxicas no chão: saia dos círculos antes de eles ativarem.');
       add('p','Aranhas avançam em zigue-zague. Derrote inimigos de elite dourados para coletar relíquias que aumentam seu dano.');
+      add('p','A ameaça cresce em quatro fases até 8 minutos; os chefes avisam com um círculo dourado antes de investir.');
+      add('p','Na evolução, escolha pelo ícone e pelo ganho curto em destaque. Cada arma e atributo possui símbolo próprio.');
       add('p','Esc ou P: pausar. O minimapa exibe inimigos próximos e a sua posição.');
     }
   }
