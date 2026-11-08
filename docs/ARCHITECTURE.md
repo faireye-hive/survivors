@@ -121,3 +121,23 @@ esse tema; a `Interface` aplica `data-theme` com uma categoria textual
 e os estilos CSS diferenciam borda, fundo e destaque (não só cor).
 `MetaShop` segue o mesmo padrão, preservando ícones SVG únicos e
 descrições acessíveis.
+
+## Curva exponencial de HP comum e densidade crescente
+
+`enemyLevelScaling(level).health = 1.05 ** (level - 1)`, com nível
+sanitizado e limitado para segurança numérica. A fórmula vale para
+todas as espécies comuns, e também para a base dos elites.
+`Enemies.spawnEnemy` mantém HP fracionário para aplicar exatamente os
+5% sem distorção por arredondamento; `rescaleCommonEnemies` atualiza
+monstros vivos quando o herói sobe de nível, preservando a fração de
+HP restante para não restaurar a vida deles. Minibosses e chefes
+mantêm multiplicadores separados, inclusive o fator temporal.
+
+`levelHordePressure(level,packBase,intervalBase)` adiciona **um monstro
+por nível ganho** ao tamanho do grupo definido por `threatAt` (2–5)
+até o máximo de 24. Também reduz gradualmente o intervalo entre grupos
+até o piso de 0,34s e aproxima um pouco o círculo de surgimento.
+`Enemies.updateEnemies` distribui os ângulos dos novos monstros ao
+redor do jogador para evitar que o grupo inteiro apareça apenas de um
+lado. `MAX_ENEMIES=170` continua prevenindo excesso de atores.
+Os encontros e marcos de miniboss/chefe por nível continuam funcionando.

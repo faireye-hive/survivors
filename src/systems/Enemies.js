@@ -2,7 +2,7 @@ import { ENEMIES } from '../data/enemies.js';
 import {ENCOUNTERS,chooseEncounterType} from '../data/encounters.js';
 import { distanceSquared } from '../core/math.js';
 import {threatAt} from '../data/difficulty.js';
-import {milestoneForLevel,miniBossType,enemyLevelScaling} from '../data/levelMilestones.js';
+import {milestoneForLevel,miniBossType,enemyLevelScaling,levelHordePressure} from '../data/levelMilestones.js';
 
 const MAX_ENEMIES=170;
 const MAX_HAZARDS=24;
@@ -23,15 +23,22 @@ export function spawnEnemy(g,type=randomEnemyType(g.elapsed),options={}){
   if(!spec||g.enemies.length>=MAX_ENEMIES)return null;
   const angle=options.angle??Math.random()*Math.PI*2;
   const threat=threatAt(g.elapsed);
-  const radius=options.radius??(Math.max(g.width,g.height)*threat.spawnRadiusFactor+100);
-  const difficulty=threat.health;
+  const pressure=levelHordePressure(g.player.level,threat.pack,threat.interval);
+  const radius=options.radius??(Math.max(190,Math.max(g.width,g.height)*
+    pressure.radiusFactor+100));
   const miniBoss=!!options.miniBoss;
   const boss=!!spec.boss||!!options.mainBoss;
   const elite=!!options.elite&&!boss&&!miniBoss;
   const levelScale=enemyLevelScaling(g.player.level);
   const milestone=options.milestoneLevel||0;
-  const health=Math.ceil(spec.hp*difficulty*levelScale.health*
-    (boss?(1.75+milestone*.045):miniBoss?(4.5+milestone*.1):elite?3.6:1));
+  // Ordinary monsters scale ONLY with hero level: +5% HP each level.
+  // Elites share the same base curve; milestone bosses retain their
+  // separate larger HP multipliers and extra time-based difficulty.
+  const healthRaw=spec.hp*levelScale.health*
+    (boss?threat.health*(1.75+milestone*.045):
+      miniBoss?threat.health*(4.5+milestone*.1):elite?3.6:1);
+  // Fractional HP on common enemies preserves exactly +5% per level.
+  const health=(boss||miniBoss)?Math.ceil(healthRaw):healthRaw;
   const enemy={
     id:++enemyId,type,boss,miniBoss,elite,
     milestoneLevel:milestone,bountyGold:options.bountyGold||0,
@@ -51,6 +58,22 @@ export function spawnEnemy(g,type=randomEnemyType(g.elapsed),options={}){
   };
   g.enemies.push(enemy);
   return enemy;
+}
+
+/**
+ * Scale enemies already on-screen while preserving their HP percentage.
+ * Main/mini bosses use separate scaling and are not updated here.
+ */
+export function rescaleCommonEnemies(g,level){
+  const scale=enemyLevelScaling(level).health;
+  for(const e of g.enemies||[]){
+    if(e.hp<=0||e.boss||e.miniBoss||!ENEMIES[e.type])continue;
+    const newMax=ENEMIES[e.type].hp*scale*(e.elite?3.6:1);
+    if(newMax===e.maxHp)continue;
+    const fraction=e.maxHp>0?Math.max(0,Math.min(1,e.hp/e.maxHp)):1;
+    e.maxHp=newMax;
+    e.hp=Math.max(0,Math.min(newMax,newMax*fraction));
+  }
 }
 
 export function triggerEncounters(g){
@@ -166,10 +189,17 @@ export function updateHazards(g,dt){
 export function updateEnemies(g,dt){
   g.spawnTimer-=dt;
   const threat=threatAt(g.elapsed);
+  const pressure=levelHordePressure(g.player.level,threat.pack,threat.interval);
   if(g.spawnTimer<=0){
-    g.spawnTimer=threat.interval;
-    // Packs grow from 2 to 5 during the eight-minute run.
-    for(let i=0;i<threat.pack&&g.enemies.length<MAX_ENEMIES;i++)spawnEnemy(g);
+    g.spawnTimer=pressure.interval;
+    // Add one monster per hero level, on top of the existing time stages.
+    // Distribute packs around the player so running in one direction
+    // doesn't make the entire horde trivially avoidable.
+    const start=Math.random()*Math.PI*2;
+    for(let i=0;i<pressure.pack&&g.enemies.length<MAX_ENEMIES;i++)
+      spawnEnemy(g,undefined,{
+        angle:start+(i/pressure.pack)*Math.PI*2
+      });
   }
   triggerEncounters(g);
   // Bosses are now triggered by levels 5, 10, 15, ... — not timers.
