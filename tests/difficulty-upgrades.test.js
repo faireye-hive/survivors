@@ -27,7 +27,7 @@ function game(t=0){
 test('ameaça aumenta em 4 fases e mantém uma evolução sem saltos bruscos de atributos',()=>{
   assert.deepEqual(THREAT_STAGES.map(s=>s.at),[0,75,210,360]);
   assert.deepEqual([0,74,75,209,210,359,360,480].map(t=>threatAt(t).pack),
-    [1,1,2,2,3,3,4,4]);
+    [2,2,3,3,4,4,5,5]);
   const points=[0,75,150,210,300,360,480].map(threatAt);
   for(let i=1;i<points.length;i++){
     assert.ok(points[i].interval<=points[i-1].interval,'spawns mais frequentes');
@@ -35,7 +35,7 @@ test('ameaça aumenta em 4 fases e mantém uma evolução sem saltos bruscos de 
     assert.ok(points[i].speed>points[i-1].speed,'inimigos perseguem mais rápido');
     assert.ok(points[i].damage>=points[i-1].damage,'dano não diminui');
   }
-  assert.ok(threatAt(480).interval>=.36);
+  assert.ok(threatAt(480).interval>=.32);
   assert.deepEqual(threatAt(-99),threatAt(0));
   assert.deepEqual(threatAt(Infinity),threatAt(0));
   assert.deepEqual(threatAt(999),threatAt(480));
@@ -45,7 +45,7 @@ test('o mesmo monstro surge mais próximo, rápido e resistente conforme o tempo
   const early=game(0),late=game(450);
   const a=spawnEnemy(early,'spider',{angle:0});
   const b=spawnEnemy(late,'spider',{angle:0});
-  assert.ok(a.x<800*.7+100,'distância inicial menor que a versão antiga');
+  assert.ok(a.x<800*.49+100,'distância inicial menor que a versão anterior');
   assert.ok(b.hp>=a.hp*3);
   assert.ok(b.speed>a.speed);
   assert.ok(b.damage>a.damage);
@@ -54,7 +54,7 @@ test('o mesmo monstro surge mais próximo, rápido e resistente conforme o tempo
 });
 
 test('pessoas enfrentam grupos maiores, não apenas inimigos individuais',()=>{
-  for(const [time,expected] of [[0,1],[90,2],[230,3],[400,4]]){
+  for(const [time,expected] of [[0,2],[90,3],[230,4],[400,5]]){
     const g=game(time);
     g.spawnTimer=0;
     updateEnemies(g,.016);

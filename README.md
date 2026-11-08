@@ -81,3 +81,42 @@ acessível por leitor de tela.
 
 Os valores das melhorias e das armas continuam os mesmos; a dificuldade
 aumentou principalmente pela pressão crescente das hordas.
+
+## Ouro e progresso entre partidas (roguelite)
+
+A cada derrota ou vitória, o jogador recebe **ouro virtual** calculado
+principalmente pelo **nível alcançado**, além de inimigos derrotados e
+tempo de sobrevivência. Toda partida rende algum ouro, até uma tentativa
+curta. Sobreviver aos oito minutos acrescenta um bônus final. A estimativa
+do ouro aparece no HUD; a quantia efetivamente recebida e o saldo
+aparecem na tela de resultado.
+
+Abra **Melhorias permanentes · Loja** no menu ou **Gastar ouro · Ficar
+mais forte** após uma partida. Existem seis trilhas permanentes, com
+preços progressivos e níveis máximos:
+
+| Melhoria | Bônus por nível | Limite |
+|---|---|---|
+| Vigor eterno | +15 PV máximos iniciais | 8 |
+| Poder ancestral | +6% dano inicial | 8 |
+| Armadura rúnica | +1 armadura inicial | 5 |
+| Botas do vento | +4% velocidade inicial | 8 |
+| Atração de Éter | +20 alcance de coleta | 6 |
+| Sabedoria acumulada | +9% XP recebido | 8 |
+
+Os atributos comprados só se aplicam **ao começar a próxima partida**.
+As melhorias temporárias por XP continuam independentes e podem
+ser escolhidas normalmente durante o jogo.
+
+O ouro, níveis comprados, recordes e melhor nível são armazenados no
+`localStorage` do navegador usando o perfil `cronicas_eter_profile_v1`.
+Dados de recordes antigos são preservados. Isso é ouro **somente do jogo**:
+não existe compra com dinheiro real, conta de servidor nem sincronização
+entre dispositivos. Limpar os dados do site também apaga o progresso.
+
+### Pressão de hordas maior
+
+As quatro fases existentes agora lançam **2, 3, 4 e 5** inimigos por
+grupo, respectivamente (0:00, 1:15, 3:30, 6:00), e as criaturas escalam
+mais rapidamente em vida e velocidade. O limite de 170 inimigos em tela
+continua protegendo o desempenho no mobile.

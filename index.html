@@ -92,7 +92,7 @@
           <span class="hud-stat"><i class="hud-stat-icon armor">⬡</i> <b id="bottom-armor">2</b> <small>ARM</small></span>
           <span class="hud-stat"><i class="hud-stat-icon power">⚔</i> <b id="bottom-might">100%</b> <small>PODER</small></span>
           <span class="hud-stat"><i class="hud-stat-icon movement">➤</i> <b id="bottom-speed">205</b> <small>MOV</small></span>
-          <span class="hud-day"><span aria-hidden="true">☼</span> SOBREVIVA</span>
+          <span class="hud-day" title="Ouro que ganhará ao terminar esta partida"><span aria-hidden="true">🪙</span> <b id="run-gold-preview">23</b> <small>OURO</small></span>
         </div>
       </div>
     </section>
@@ -116,7 +116,9 @@
           <button class="class-option" data-class="mage"><span class="class-symbol">✦</span><span><strong>Arcanista</strong><small>Magia • dano à distância</small></span><span class="class-radio"></span></button>
           <button class="class-option" data-class="ranger"><span class="class-symbol">➶</span><span><strong>Andarilho</strong><small>Adagas • veloz</small></span><span class="class-radio"></span></button>
         </div>
+        <div class="menu-wallet" aria-label="Moedas acumuladas"><span>🪙 OURO GUARDADO</span><strong id="menu-gold">0</strong></div>
         <button id="start-button" class="primary-button">INICIAR AVENTURA <span>→</span></button>
+        <button type="button" id="open-shop" class="ghost-button shop-open-button">✦ MELHORIAS PERMANENTES · LOJA</button>
         <p class="card-footnote">Personagens, inimigos, cenários e efeitos desenhados por código com Canvas 2D.</p>
 
       </div>
@@ -150,8 +152,24 @@
         <h2 id="end-title">Sua lenda continua</h2>
         <p id="end-description"></p>
         <div class="result-grid"><div><small>TEMPO</small><strong id="end-time">00:00</strong></div><div><small>INIMIGOS</small><strong id="end-kills">0</strong></div><div><small>NÍVEL</small><strong id="end-level">1</strong></div></div>
-        <button id="again-button" class="primary-button">JOGAR NOVAMENTE <span>→</span></button>
+        <div class="end-gold-reward" aria-live="polite">
+          <div><span>🪙 OURO GANHO NESTA PARTIDA</span><strong>+<span id="end-gold-earned">0</span></strong></div>
+          <small>Carteira: <b id="end-gold-wallet">0</b> ouro. Quanto maior o nível alcançado, maior a recompensa.</small>
+        </div>
+        <button type="button" id="end-shop" class="primary-button gold-shop-button">GASTAR OURO · FICAR MAIS FORTE <span>↗</span></button>
+        <button id="again-button" class="ghost-button">JOGAR NOVAMENTE <span>→</span></button>
         <button id="end-menu" class="ghost-button">VOLTAR AO MENU</button>
+      </div>
+    </section>
+    <section id="shop-screen" class="screen overlay-screen" hidden aria-label="Loja de melhorias permanentes" role="dialog" aria-modal="true">
+      <div class="overlay-card shop-card panel">
+        <div class="eyebrow">✦ PROGRESSÃO PERMANENTE ✦</div>
+        <h2>Legado do Herói</h2>
+        <p>O ouro é seu mesmo após a derrota. Compre melhorias para começar cada nova partida mais forte.</p>
+        <div class="shop-wallet"><span>🪙 SEU OURO</span><strong id="shop-gold">0</strong><small>Use o ouro conquistado nas partidas</small></div>
+        <div id="shop-grid" class="meta-upgrade-grid" aria-label="Melhorias permanentes disponíveis"></div>
+        <p id="shop-message" class="shop-feedback" aria-live="polite"></p>
+        <button type="button" id="shop-close" class="ghost-button">← VOLTAR</button>
       </div>
     </section>
     <div id="joystick" hidden><div id="joystick-knob"></div></div>
