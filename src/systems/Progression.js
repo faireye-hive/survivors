@@ -8,12 +8,15 @@ export function createChoices(g){
     const w=g.weapons.find(x=>x.id===id);
     if(w?.level>=def.maxLevel)continue;
     pool.push({id:'weapon:'+id,name:def.name,glyph:def.glyph,
+      effect:w?'DANO ↑ · RECARGA ↓':def.effect,
+      accent:def.accent,family:'weapon',
       description:w?'Aumenta o dano e a cadência desta arma.':def.description,
       tier:w?'NÍVEL '+(w.level+1):'NOVA ARMA'});
   }
   for(const [id,def] of Object.entries(STAT_UPGRADES)){
     const level=g.upgrades[id]||0;if(level>=def.maxLevel)continue;
     pool.push({id:'stat:'+id,name:def.name,glyph:def.glyph,
+      effect:def.effect,accent:def.accent,family:'stat',
       description:def.description,tier:id==='recovery'?'CURA':'NÍVEL '+(level+1)});
   }
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}

@@ -2,6 +2,7 @@ import { CLASSES } from '../data/classes.js';
 import { WEAPONS } from '../data/weapons.js';
 import { formatTime } from '../core/math.js';
 import { getProfile } from '../storage/Profile.js';
+import {createUpgradeIcon} from './UpgradeIcons.js';
 import { hudStats, minimapMarkers, MINIMAP_RADIUS } from './HudData.js';
 
 export class Interface {
@@ -85,13 +86,23 @@ export class Interface {
     for(const choice of choices){
       const button=document.createElement('button');
       button.className='upgrade-option';button.dataset.upgrade=choice.id;
+      button.dataset.family=choice.family;
+      button.style.setProperty('--upgrade-accent',choice.accent);
+      button.setAttribute('aria-label',
+        choice.name+'. '+choice.effect+'. '+choice.description+'. '+choice.tier);
+      const category=document.createElement('span');
+      category.className='upgrade-kind';
+      category.textContent=choice.family==='weapon'?'ARMA':'ATRIBUTO';
       const icon=document.createElement('span');
-      icon.className='upgrade-icon';icon.textContent=choice.glyph;
+      icon.className='upgrade-icon';
+      icon.appendChild(createUpgradeIcon(choice.id));
       const title=document.createElement('strong');title.textContent=choice.name;
+      const effect=document.createElement('span');
+      effect.className='upgrade-effect';effect.textContent=choice.effect;
       const desc=document.createElement('small');desc.textContent=choice.description;
       const tier=document.createElement('span');tier.className='upgrade-tier';
       tier.textContent=choice.tier;
-      button.append(icon,title,desc,tier);box.appendChild(button);
+      button.append(category,icon,title,effect,desc,tier);box.appendChild(button);
     }
     this.el['level-screen'].hidden=false;this.el['pause-screen'].hidden=true;
     this.update(this.game,true);

@@ -18,6 +18,21 @@ export function drawEnemy(c,e,x,y,t){
       id:'monster.'+e.type,scale:e.elite?1.2:1
     });
   }
+  if(e.boss&&e.rushWarmup>0){
+    // Amber focus ring telegraphs the upcoming lunge. The center arrow
+    // points along the boss's current facing direction.
+    const q=Math.max(0,Math.min(1,e.rushWarmup/.7));
+    c.strokeStyle='#ffe3a3';c.lineWidth=2.4+Math.sin(t*20)*.55;
+    c.setLineDash([8,5]);
+    c.beginPath();c.arc(x,y,e.radius*(1.2+(1-q)*.5),0,PI2);c.stroke();
+    c.setLineDash([]);
+    c.fillStyle='#f9cc8399';
+    c.beginPath();c.arc(x,y-e.radius*3.25,4+(1-q)*3,0,PI2);c.fill();
+  }
+  if(e.boss&&e.rushTime>0){
+    c.strokeStyle='#ffdca37a';c.lineWidth=3;
+    c.beginPath();c.arc(x,y,e.radius*1.4,0,PI2);c.stroke();
+  }
   if(e.elite){
     c.strokeStyle='#e8c88588';c.lineWidth=1.5;
     c.beginPath();c.ellipse(x,y-19,e.radius*1.9,e.radius*2.5,0,0,PI2);c.stroke();
