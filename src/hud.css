@@ -338,3 +338,15 @@
  .survivor-hud .hud-stat-icon{font-size:14px}
  .survivor-hud .hud-stat b{font-size:10px}
 }
+
+/* The next stage is signalled without adding a blocking modal. */
+.survivor-hud .threat-label{
+ display:block;margin-top:3px;color:#b7d6b5;
+ font-size:9px;font-weight:900;letter-spacing:.11em
+}
+.survivor-hud .threat-label[data-stage="2"]{color:#f3d69f}
+.survivor-hud .threat-label[data-stage="3"]{color:#f5b88b}
+.survivor-hud .threat-label[data-stage="4"]{color:#f18f8e}
+@media(max-width:680px){
+ .survivor-hud .threat-label{display:none}
+}

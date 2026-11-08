@@ -1,6 +1,7 @@
 import { ENEMIES } from '../data/enemies.js';
 import {ENCOUNTERS,chooseEncounterType} from '../data/encounters.js';
 import { distanceSquared } from '../core/math.js';
+import {threatAt} from '../data/difficulty.js';
 
 const MAX_ENEMIES=170;
 const MAX_HAZARDS=24;
@@ -20,8 +21,9 @@ export function spawnEnemy(g,type=randomEnemyType(g.elapsed),options={}){
   const spec=ENEMIES[type];
   if(!spec||g.enemies.length>=MAX_ENEMIES)return null;
   const angle=options.angle??Math.random()*Math.PI*2;
-  const radius=options.radius??(Math.max(g.width,g.height)*.7+100);
-  const difficulty=1+g.elapsed/310;
+  const threat=threatAt(g.elapsed);
+  const radius=options.radius??(Math.max(g.width,g.height)*threat.spawnRadiusFactor+100);
+  const difficulty=threat.health;
   const elite=!!options.elite&&!spec.boss;
   const health=Math.ceil(spec.hp*difficulty*(elite?3.6:1));
   const enemy={
@@ -30,10 +32,12 @@ export function spawnEnemy(g,type=randomEnemyType(g.elapsed),options={}){
     y:g.player.y+Math.sin(angle)*radius,
     radius:spec.radius*(elite?1.2:1),
     hp:health,maxHp:health,
-    speed:spec.speed*(1+g.elapsed/1300)*(elite?1.12:1),
-    damage:spec.damage+Math.floor(g.elapsed/95)+(elite?4:0),
+    speed:spec.speed*threat.speed*(elite?1.12:1),
+    damage:spec.damage+threat.damage+(elite?4:0),
     xp:spec.xp*(elite?3:1),hit:0,vx:0,vy:0,
-    sporeTimer:2.3+(enemyId%4)*.47
+    sporeTimer:2.3+(enemyId%4)*.47,
+    rushCooldown:4.1+(enemyId%3)*.6,rushWarmup:0,rushTime:0,
+    rushVx:0,rushVy:0
   };
   g.enemies.push(enemy);
   return enemy;
@@ -44,7 +48,7 @@ export function triggerEncounters(g){
   for(const event of ENCOUNTERS){
     if(g.elapsed<event.at||g.encountersSeen.has(event.id))continue;
     g.encountersSeen.add(event.id);
-    const radius=Math.max(g.width,g.height)*.7+140;
+    const radius=Math.max(g.width,g.height)*.55+125;
     for(let i=0;i<event.count&&g.enemies.length<MAX_ENEMIES;i++){
       spawnEnemy(g,chooseEncounterType(event,i),{
         angle:(i/event.count)*Math.PI*2+Math.PI/9,
@@ -82,11 +86,11 @@ export function updateHazards(g,dt){
 
 export function updateEnemies(g,dt){
   g.spawnTimer-=dt;
-  const interval=Math.max(.19,1.1-g.elapsed/580);
+  const threat=threatAt(g.elapsed);
   if(g.spawnTimer<=0){
-    g.spawnTimer=interval;
-    const count=g.elapsed>210?2:1;
-    for(let i=0;i<count&&g.enemies.length<MAX_ENEMIES;i++)spawnEnemy(g);
+    g.spawnTimer=threat.interval;
+    // Packs grow from 1 to 4 during the eight-minute run.
+    for(let i=0;i<threat.pack&&g.enemies.length<MAX_ENEMIES;i++)spawnEnemy(g);
   }
   triggerEncounters(g);
   if(g.elapsed>=165&&!g.bossFlags.first){g.bossFlags.first=true;spawnEnemy(g,'colossus');}
@@ -102,6 +106,26 @@ export function updateEnemies(g,dt){
     const slow=e.type==='spore'&&dist<135?.52:1;
     e.vx=(dx*forward-dy/dist*orbit)*slow;
     e.vy=(dy*forward+dx/dist*orbit)*slow;
+    if(e.boss){
+      // A visible charge gives slow bosses a meaningful threat while
+      // leaving a 0.7s warning and enough time to dodge.
+      if(e.rushWarmup>0){
+        e.rushWarmup-=dt;e.vx=0;e.vy=0;
+        if(e.rushWarmup<=0){
+          e.rushTime=.72;
+          e.rushVx=dx/dist*e.speed*4;
+          e.rushVy=dy/dist*e.speed*4;
+        }
+      }else if(e.rushTime>0){
+        e.rushTime-=dt;e.vx=e.rushVx;e.vy=e.rushVy;
+      }else{
+        e.rushCooldown-=dt;
+        if(e.rushCooldown<=0&&dist<470){
+          e.rushWarmup=.7;e.rushCooldown=5.6;
+          e.vx=0;e.vy=0;
+        }
+      }
+    }
     e.x+=e.vx*dt;e.y+=e.vy*dt;
 
     if(e.type==='spore'){

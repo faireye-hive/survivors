@@ -72,13 +72,43 @@ h1 span{color:#e5bf74}
 .overlay-card h2{color:#f5e9cc;font-size:35px;margin:12px 0 5px}
 .overlay-card p{color:#b0c4c2;font-size:14px;line-height:1.65;margin:0 0 25px}
 .overlay-card .ghost-button{width:100%;margin-top:12px}.ghost-button{background:transparent;color:#c4d4cc;border:1px solid #516b70;padding:13px;border-radius:7px;font-weight:800;font-size:11px;letter-spacing:.12em}.ghost-button:hover{background:#223b44}
-.level-card{width:min(880px,100%)}.level-card h2{font-size:40px}.level-card h2 span{color:#e3c580}
-.upgrade-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:28px 0 22px}
-.upgrade-option{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;min-height:210px;border:1px solid #466e69;background:linear-gradient(#1d3840,#132530);border-radius:10px;color:#f3e7cb;padding:24px 13px;transition:transform .15s,border-color .15s}
-.upgrade-option:hover{transform:translateY(-5px);border-color:#e2c079}
-.upgrade-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:12px;border:1px solid #6c987e88;background:#122a30;font-size:29px}
-.upgrade-option strong{font:700 17px Georgia,'Times New Roman',serif}.upgrade-option small{font-size:12px;line-height:1.5;color:#afc9c8}
-.upgrade-option .upgrade-tier{margin-top:auto;font-size:10px;letter-spacing:.1em;color:#eacb89}
+.level-card{width:min(900px,100%)}
+.level-card h2{font-size:40px}.level-card h2 span{color:#e3c580}
+.upgrade-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0 20px}
+.upgrade-option{
+  --upgrade-accent:#ead49d;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  text-align:center;min-height:248px;padding:18px 12px 16px;
+  background:linear-gradient(160deg,#1b3440,#0f202b);
+  border:1px solid #45636b;border-radius:12px;color:#f3e7cb;
+  transition:transform .15s,border-color .15s,box-shadow .15s;
+}
+.upgrade-option:hover,.upgrade-option:focus-visible{
+  transform:translateY(-3px);border-color:var(--upgrade-accent);
+  box-shadow:inset 0 0 0 1px var(--upgrade-accent),0 9px 22px #020b13aa;
+}
+.upgrade-kind{
+  align-self:stretch;color:#9fbbb8;font-size:9px;
+  font-weight:800;letter-spacing:.18em;text-align:left
+}
+.upgrade-icon{
+  display:grid;place-items:center;width:70px;height:70px;flex:none;
+  color:var(--upgrade-accent);
+  border:1px solid color-mix(in srgb,var(--upgrade-accent) 52%,transparent);
+  background:color-mix(in srgb,var(--upgrade-accent) 11%,#0f2530);
+  border-radius:16px;box-shadow:inset 0 0 20px #030d1699
+}
+.upgrade-artwork{display:block;width:48px;height:48px}
+.upgrade-option strong{font:700 17px/1.25 Georgia,'Times New Roman',serif}
+.upgrade-effect{
+  color:var(--upgrade-accent);font-size:13px;font-weight:900;
+  letter-spacing:.065em;min-height:18px
+}
+.upgrade-option small{font-size:11px;line-height:1.45;color:#acc6c5;max-width:210px}
+.upgrade-option .upgrade-tier{
+  margin-top:auto;font-size:10px;letter-spacing:.11em;
+  font-weight:850;color:#d1d9ce
+}
 .overlay-card>small{color:#869d9d;font-size:11px}
 .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:25px}
 .result-grid>div{background:#0f222b;border:1px solid #304a4a;border-radius:8px;padding:14px 5px}.result-grid small{display:block;color:#819fa5;font-size:9px;letter-spacing:.11em}.result-grid strong{display:block;color:#f3d08c;font:700 23px Georgia,'Times New Roman',serif;margin-top:5px}
@@ -88,3 +118,25 @@ h1 span{color:#e5bf74}
 @media(max-height:650px) and (min-width:681px){.menu-screen{padding-top:10px;padding-bottom:10px}.menu-mark{font-size:40px;margin:3px}.menu-side h1{font-size:52px;margin:0 0 10px}.menu-subtitle{margin-bottom:10px;font-size:13px}.record{margin-top:12px}.menu-card{padding:18px 24px}.menu-card h2{font-size:26px}.menu-card p{margin-bottom:12px}.class-list{gap:5px;margin-bottom:10px}.class-option{padding:8px}.class-symbol{height:30px;width:30px}.menu-footer{display:none}}
 
 
+
+/* On touch screens, let the silhouette and gain be understood instantly. */
+@media(max-width:680px){
+ .level-card{padding:18px}
+ .level-card h2{font-size:27px}
+ .upgrade-grid{gap:8px;margin:15px 0}
+ .upgrade-option{
+   min-height:80px;display:grid;
+   grid-template-columns:60px minmax(0,1fr);
+   grid-template-rows:repeat(4,auto);
+   column-gap:10px;row-gap:1px;
+   text-align:left;padding:9px 11px;align-items:center
+ }
+ .upgrade-option:hover{transform:none}
+ .upgrade-icon{grid-column:1;grid-row:1/5;width:56px;height:56px;border-radius:12px}
+ .upgrade-artwork{width:38px;height:38px}
+ .upgrade-kind{grid-column:2;grid-row:1;align-self:end;font-size:8px}
+ .upgrade-option strong{grid-column:2;grid-row:2;font-size:15px}
+ .upgrade-effect{grid-column:2;grid-row:3;font-size:12px;min-height:0}
+ .upgrade-option small{display:none}
+ .upgrade-option .upgrade-tier{grid-column:2;grid-row:4;font-size:8px}
+}
