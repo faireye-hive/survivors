@@ -1,0 +1,4 @@
+interface:
+  display_name: "3D Procedural"
+  short_description: "Modelos e mundos 3D com qualidade visual e técnica"
+  default_prompt: "Use $procedural-3d para criar um modelo ou cenário 3D procedural com direção de arte, parâmetros reproduzíveis e validação visual."
