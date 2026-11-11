@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   CAMPAIGN_KEY,REGIONS,IDLE_TICK_MS,MAX_OFFLINE_MS,getCampaign,
   idleProduction,campaignSummary,resolveFortRaid,advanceConstructions,
-  repairFortress,advanceRegion
+  repairFortress,advanceRegion,startConstruction,depositConstruction,hireWorker
 } from '../src/storage/Campaign.js';
 import {PROFILE_KEY} from '../src/storage/Profile.js';
 
@@ -93,4 +93,36 @@ test('obras em todas as fortalezas avançam sem depender da posição do herói'
   assert.equal(c.fortresses[1].buildings.lumber,1);
   assert.equal(c.fortresses[0].project,null);
   assert.equal(c.fortresses[1].project,null);
+});
+
+test('obra começa sem débito e só progride com materiais entregues no canteiro',()=>{
+  const initial={region:0,wood:30,stone:18,fortresses:[{buildings:{tower:1,lumber:0,quarry:0,wall:0},workers:[]}]};
+  withStorage({[CAMPAIGN_KEY]:JSON.stringify(initial)},()=>{
+    const started=startConstruction(0,'lumber');
+    assert.equal(started.ok,true);
+    assert.equal(started.state.wood,30);
+    assert.equal(started.state.stone,18);
+    assert.equal(started.state.fortresses[0].project.woodRequired,24);
+    const first=depositConstruction(0,'lumber',2);
+    assert.equal(first.delivered,true);
+    assert.equal(first.progress,2/24);
+    assert.equal(first.state.wood,28);
+    for(let i=0;i<11;i++)depositConstruction(0,'lumber',2);
+    const final=getCampaign();
+    assert.equal(final.fortresses[0].buildings.lumber,1);
+    assert.equal(final.fortresses[0].project,null);
+    assert.equal(final.wood,6);
+    assert.equal(final.stone,13);
+  });
+});
+test('trabalhadores de coleta exigem sua instalação e ficam contratados após pagar ouro',()=>{
+  const initial={region:0,wood:30,stone:18,fortresses:[{buildings:{tower:1,lumber:0,quarry:0,wall:0},workers:[]}]};
+  withStorage({[CAMPAIGN_KEY]:JSON.stringify(initial),[PROFILE_KEY]:JSON.stringify({gold:500})},values=>{
+    assert.equal(hireWorker(0,'lumberjack').ok,false);
+    assert.equal(hireWorker(0,'miner').ok,false);
+    values.set(CAMPAIGN_KEY,JSON.stringify({...initial,fortresses:[{...initial.fortresses[0],buildings:{...initial.fortresses[0].buildings,lumber:1}}]}));
+    const hired=hireWorker(0,'lumberjack');
+    assert.equal(hired.ok,true);
+    assert.equal(hired.state.fortresses[0].workers[0].role,'lumberjack');
+  });
 });

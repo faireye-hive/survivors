@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {geometry,material,part,group,humanoid,compileModel} from './Models.js';
 import {hash2} from '../../core/math.js';
-import {SITE_POSITIONS,SITE_DEFS,WORKERS,WORKER_Y,REGIONS} from '../../storage/Campaign.js';
+import {SITE_POSITIONS,WORKERS,WORKER_Y,REGIONS} from '../../storage/Campaign.js';
 import {FORTRESS_BOUNDS} from '../../world/FortressBounds.js';
 
 export const UNIT=50;
@@ -57,76 +57,180 @@ export class Terrain{
   }
   destroy(){for(const mesh of this.root.children)mesh.dispose?.();this.root.removeFromParent();}
 }
-function roof(parent,x,y,z,width=1,depth=1){
-  const m=part(parent,'cone','#8b5940',[x,y,z],[width,.8,depth]);m.geometry=new T.ConeGeometry(1,1,4);m.rotation.y=Math.PI/4;m.userData.ownGeometry=true;return m;
+const palette={stone:'#858c81',stoneLight:'#b4b5a1',mortar:'#555d57',wood:'#765039',woodLight:'#ae8250',roof:'#514650',iron:'#343b3a',blueprint:'#9dceb8'};
+function materialPbr(color,roughness=.9,metalness=0){const m=new T.MeshStandardMaterial({color,roughness,metalness,flatShading:true});m.userData.ownMaterial=true;return m;}
+function customMesh(parent,geo,color,x=0,y=0,z=0,opts={}){
+  const m=new T.Mesh(geo,materialPbr(color,opts.roughness??.9,opts.metalness??0));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;m.userData.ownGeometry=true;m.userData.ownMaterial=true;parent.add(m);return m;
 }
-function house(parent,x=0,z=0,width=1.4){
-  part(parent,'box','#bdad83',[x,.67,z],[width,1.32,1.2]);
-  roof(parent,x,1.65,z,width*.85,1.05);
-  part(parent,'box','#4e3f30',[x,.42,z+.61],[.4,.84,.04]);
-  for(const side of [-1,1])part(parent,'box','#e9c77e',[x+side*width*.32,.85,z+.62],[.23,.32,.035],true);
-  part(parent,'box','#6e4e37',[x,1.28,z+.63],[width+.1,.1,.08]);
+function phase(parent,threshold){const g=group(parent);g.userData.revealAt=threshold;return g;}
+function roofPanel(corners,thickness=.11){
+  const lower=corners.map(p=>[p[0],p[1]-thickness,p[2]]),verts=[...corners,...lower];
+  const faces=[[0,1,2,3],[7,6,5,4],[0,4,5,1],[1,5,6,2],[2,6,7,3],[3,7,4,0]],positions=[],uv=[];
+  for(const f of faces)for(const i of [0,1,2,0,2,3])positions.push(...verts[f[i]]);
+  for(let i=0;i<6;i++)uv.push(0,0,1,0,1,1,0,0,1,1,0,1);
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();return g;
 }
-function tower(parent,x,z,level=1){
-  part(parent,'box','#738278',[x,.85,z],[.9,1.7,.85]);
-  part(parent,'box','#a7ad93',[x,1.65,z],[1.15,.2,1.1]);
-  for(const a of [-.42,.42])for(const b of [-.4,.4])part(parent,'box','#a7ad93',[x+a,1.92,z+b],[.25,.4,.25]);
-  part(parent,'box','#2b4042',[x,1.13,z+.44],[.16,.36,.02]);
-  const pole=part(parent,'cylinder','#725137',[x,2.3,z],[.025,1.1,.025]);
-  part(parent,'box','#c77c5e',[x+.23,2.65,z],[.45,.25,.035]);
-  if(level>1)part(parent,'crystal','#84e0d9',[x,2.02,z],[.15,.25,.15],true);
+function timberRoof(parent,width,depth,eave,peak,color=palette.roof){
+  const x=width/2+.18,z=depth/2+.18;
+  customMesh(parent,roofPanel([[0,peak,z],[0,peak,-z],[-x,eave,-z],[-x,eave,z]]),color);
+  customMesh(parent,roofPanel([[x,eave,z],[x,eave,-z],[0,peak,-z],[0,peak,z]]),color);
+  const ridge=part(parent,'cylinder',palette.wood,[0,peak,0],[.09,depth+.5,.09]);ridge.rotation.x=Math.PI/2;
+  for(const side of [-1,1])for(const end of [-1,1]){
+    const a=new T.Vector3(0,peak,end*z),b=new T.Vector3(side*x,eave,end*z),v=b.clone().sub(a),beam=part(parent,'box',palette.wood,[0,0,0],[.11,v.length(),.12]);
+    beam.position.copy(a.clone().add(b).multiplyScalar(.5));beam.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());
+  }
+}
+function cottage(parent,x,z,kind='house',progress=1){
+  const root=group(parent,[x,0,z]),base=phase(root,.12),frame=phase(root,.33),walls=phase(root,.53),cover=phase(root,.76),details=phase(root,.9);root.name=kind==='house'?'Player shelter':kind==='storage'?'Resource depot':'Production workshop';
+  root.userData.setProgress=p=>{for(const g of [base,frame,walls,cover,details])g.visible=p>=g.userData.revealAt;root.userData.progress=p;};
+  const w=kind==='house'?2.15:1.8,d=kind==='house'?1.7:1.45,h=1.12,front=d/2;
+  part(base,'box','#645f51',[0,.13,0],[w+.16,.26,d+.16]);
+  for(const sx of [-1,1])for(const sz of [-1,1])part(frame,'box',palette.wood,[sx*(w/2-.08),h/2+.24,sz*(d/2-.08)],[.14,h,.14]);
+  for(const y of [.42,h+.24])for(const side of [-1,1])part(frame,'box',palette.woodLight,[0,y,side*(d/2-.08)],[w,.1,.1]);
+  part(walls,'box','#c4b693',[-w/2+.06,.77,0],[.12,.93,d-.24]);part(walls,'box','#c4b693',[w/2-.06,.77,0],[.12,.93,d-.24]);
+  part(walls,'box','#c4b693',[0,.77,-d/2+.06],[w-.22,.93,.12]);
+  const door=.42,sideW=(w-.24-door)/2;
+  for(const sx of [-1,1])part(walls,'box','#c4b693',[sx*(door/2+sideW/2),.77,front-.06],[sideW,.93,.12]);
+  const gable=new T.Shape();gable.moveTo(-w/2,.98);gable.lineTo(w/2,.98);gable.lineTo(0,1.72);gable.closePath();
+  const gg=new T.ExtrudeGeometry(gable,{depth:.13,bevelEnabled:false});gg.translate(0,0,-.065);customMesh(walls,gg,'#baa981',0,0,-d/2+.06);
+  const gf=gg.clone();customMesh(walls,gf,'#baa981',0,0,d/2-.06);
+  timberRoof(cover,w+.22,d+.2,1.45,1.83);
+  for(const sx of [-1,1]){
+    part(details,'box',palette.woodLight,[sx*door/2,.68,front+.035],[.09,.84,.13]);
+    part(details,'box',palette.woodLight,[0,1.1,front+.035],[door+.1,.1,.13]);
+  }
+  part(details,'box',kind==='house'?palette.wood:palette.iron,[0,.58,front+.05],[door-.08,.68,.05],kind!=='house');
+  for(const sx of [-1,1]){
+    part(details,'box',palette.wood,[sx*.63,.78,front+.035],[.34,.34,.09]);
+    part(details,'box','#e8c77d',[sx*.63,.78,front+.09],[.22,.22,.035],true);
+  }
+  if(kind==='storage'){
+    for(let i=0;i<3;i++){const log=part(details,'cylinder',i%2?palette.woodLight:palette.wood,[.34,.21+i*.12,-.3],[.13,.82,.13]);log.rotation.z=Math.PI/2;}
+    part(details,'box',palette.iron,[0,.43,front+.12],[.035,.16,.04]);
+  }else if(kind==='workshop'){
+    const wheel=part(details,'cylinder','#77553a',[.69,.58,-.48],[.34,.12,.34]);wheel.rotation.x=Math.PI/2;
+    part(details,'box',palette.wood,[.48,.32,-.48],[.68,.12,.12]);
+    part(details,'box',palette.iron,[.48,.57,-.48],[.08,.46,.08],true);
+  }
+  root.userData.setProgress(progress);return root;
+}
+function octagonalTower(parent,x,z,level=1,progress=1){
+  const root=group(parent,[x,0,z]),base=phase(root,.12),shaft=phase(root,.34),walk=phase(root,.66),teeth=phase(root,.86);root.name='Octagonal watchtower';
+  root.userData.setProgress=p=>{for(const g of [base,shaft,walk,teeth])g.visible=p>=g.userData.revealAt;root.userData.progress=p;};
+  const sides=8,rot=Math.PI/8;
+  customMesh(base,new T.CylinderGeometry(.66,.78,.25,sides),palette.mortar,0,.125,0);
+  customMesh(shaft,new T.CylinderGeometry(.53,.67,1.48,sides),palette.stone,0,.98,0);
+  customMesh(shaft,new T.CylinderGeometry(.57,.53,.16,sides),palette.stoneLight,0,1.78,0);
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4+rot,r=.56;
+    part(walk,'box',palette.woodLight,[Math.sin(a)*r,1.9,Math.cos(a)*r],[.18,.12,.18]).rotation.y=a;
+    part(teeth,'box',palette.stoneLight,[Math.sin(a)*.56,2.12,Math.cos(a)*.56],[.2,.35,.22]).rotation.y=a;
+  }
+  const slit=part(shaft,'box','#263a3a',[0,1.02,.535],[.12,.34,.025]);
+  if(level>1)part(teeth,'crystal','#83ded1',[0,2.43,0],[.15,.24,.15],true);
+  root.userData.setProgress(progress);return root;
+}
+function makeWallRun(parent,length,x,z,rotation,progress=1){
+  const root=group(parent,[x,0,z]);root.rotation.y=rotation;root.name='Crenellated stone wall';
+  const base=phase(root,.12),body=phase(root,.32),trim=phase(root,.57),teeth=phase(root,.76);
+  root.userData.setProgress=p=>{for(const g of [base,body,trim,teeth])g.visible=p>=g.userData.revealAt;root.userData.progress=p;};
+  part(base,'box',palette.mortar,[0,.12,0],[length+.14,.24,.68]);
+  const shape=new T.Shape();shape.moveTo(-length/2,0);shape.lineTo(length/2,0);shape.lineTo(length/2,1.32);shape.lineTo(-length/2,1.32);shape.closePath();
+  const geo=new T.ExtrudeGeometry(shape,{depth:.48,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:1});geo.translate(0,0,-.24);customMesh(body,geo,palette.stone,0,.2,0);
+  for(const yy of [.58,1.05])part(trim,'box',palette.mortar,[0,yy,0],[length,.035,.51]);
+  const count=Math.max(2,Math.floor(length/.62));
+  for(let i=0;i<count;i++){
+    const xx=-length/2+(i+.5)*length/count;
+    if(i%3===0){part(trim,'box',palette.stoneLight,[xx,.84,.255],[.035,.38,.035]);part(trim,'box',palette.stoneLight,[xx,.84,-.255],[.035,.38,.035]);}
+    if(i%4===1){const buttress=part(trim,'box',palette.stoneLight,[xx,.54,.34],[.27,.68,.28]);buttress.rotation.z=.08;}
+  }
+  part(teeth,'box',palette.stoneLight,[0,1.62,0],[length+.15,.16,.63]);
+  for(let i=0;i<count;i+=2){const xx=-length/2+(i+.5)*length/count;part(teeth,'box',palette.stoneLight,[xx,1.85,0],[Math.min(.38,length/count*.7),.34,.52]);}
+  root.userData.setProgress(progress);return root;
+}
+function archGate(parent,x,z,rotation=0){
+  const root=group(parent,[x,0,z]);root.rotation.y=rotation;root.name='Open arched gate';
+  const shape=new T.Shape(),w=.58,r=.43,spring=1.1,h=1.95;
+  shape.moveTo(-w,0);shape.lineTo(-r,0);shape.lineTo(-r,spring);shape.absarc(0,spring,r,Math.PI,0,true);shape.lineTo(r,0);shape.lineTo(w,0);shape.lineTo(w,h);shape.lineTo(-w,h);shape.closePath();
+  const g=new T.ExtrudeGeometry(shape,{depth:.42,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:1,curveSegments:8});g.translate(0,0,-.21);customMesh(root,g,palette.stoneLight,0,0,0);
+  for(const side of [-1,1]){
+    part(root,'box',palette.wood,[side*.21,.58,.23],[.24,1.05,.08]);
+    for(const y of [.28,.72,1.1])part(root,'box',palette.iron,[side*.21,y,.28],[.26,.045,.04],true);
+    part(root,'sphere',palette.iron,[side*.2,.58,.31],[.055,.055,.045],true);
+  }
+  part(root,'box',palette.stoneLight,[0,1.97,0],[1.38,.17,.62]);return root;
 }
 export function createFortress(index,fort,label){
-  const root=group();root.position.x=index*FORTRESS_BOUNDS.spacing/UNIT;
+  const root=group();root.name='Procedural medieval fortress';root.position.x=index*FORTRESS_BOUNDS.spacing/UNIT;root.userData.assetId='survival-fortress-v2';root.userData.category='fortification';root.userData.units='meters';
   const halfWidth=FORTRESS_BOUNDS.halfWidth/UNIT,halfDepth=FORTRESS_BOUNDS.halfDepth/UNIT;
-  part(root,'box','#827b58',[0,-.025,0],[12.3,.15,6.8]);
-  part(root,'box','#b59d6a',[1,.07,0],[7.5,.08,.7]);
-  house(root,0,-.2,1.85);
-  for(const z of [-halfDepth,halfDepth])for(let x=-halfWidth+.2;x<=halfWidth-.2;x+=.4){
-    const height=z>0?.45:.95;
-    part(root,'cylinder','#7c6141',[x,height*.5,z],[.09,height,.09]);
-    part(root,'cone','#ba9363',[x,height+.09,z],[.1,.18,.1]);
+  part(root,'box','#827b58',[0,-.12,0],[12.15,.12,6.65]);
+  part(root,'box','#ad9c75',[0,-.045,0],[8.6,.045,4.7]);
+  // Permanent timber palisade and open gateway keep the starting fort legible.
+  const palisade=group(root);root.userData.palisade=palisade;
+  for(const z of [-halfDepth,halfDepth])for(let x=-halfWidth+.12;x<=halfWidth-.12;x+=.38){
+    part(palisade,'cylinder',palette.wood,[x,.48,z],[.07,.96,.07]);
+    part(palisade,'cone',palette.woodLight,[x,1.01,z],[.08,.18,.08]);
   }
-  for(const x of [-halfWidth,halfWidth])for(let z=-halfDepth+.3;z<=halfDepth-.3;z+=.4){
-    if(x>0&&Math.abs(z)<.9)continue;
-    part(root,'cylinder','#795f40',[x,.4,z],[.09,.8,.09]);
+  for(const x of [-halfWidth,halfWidth])for(let z=-halfDepth+.14;z<=halfDepth-.14;z+=.38){
+    if(x>0&&Math.abs(z)<.78)continue;
+    part(palisade,'cylinder',palette.wood,[x,.48,z],[.07,.96,.07]);
   }
+  const wallLevel=fort.buildings.wall||0,wallProject=fort.project?.type==='wall'?
+    Math.min(1,fort.project.progress/fort.project.required):null;
+  if(wallLevel||wallProject!==null){
+    const p=wallLevel?1:wallProject??1;
+    palisade.visible=p<.2&&!wallLevel;
+    // Four solid modular runs; the east side is split around a real walk-through gate.
+    root.userData.constructionAssets=[];
+    root.userData.constructionAssets.push(makeWallRun(root,halfWidth*2,0,-halfDepth,0,p),makeWallRun(root,halfWidth*2,0,halfDepth,0,p));
+    root.userData.constructionAssets.push(makeWallRun(root,halfDepth*2,-halfWidth,0,Math.PI/2,p));
+    root.userData.constructionAssets.push(makeWallRun(root,halfDepth-.88,halfWidth,-(halfDepth+.88)/2,Math.PI/2,p));
+    root.userData.constructionAssets.push(makeWallRun(root,halfDepth-.88,halfWidth,(halfDepth+.88)/2,Math.PI/2,p));
+  }
+  archGate(root,halfWidth,0,Math.PI/2);
+  // The shelter is the visual heart of every settlement, built in six real mesh stages.
+  cottage(root,0,-.1,'house',1);
+  root.userData.constructionAssets??=[];
   for(const [key,pos] of Object.entries(SITE_POSITIONS)){
-    const x=pos.x/UNIT,z=pos.y/UNIT,level=fort.buildings[key]||0;
-    part(root,'cylinder','#667265',[x,.09,z],[.91,.16,.78]);
-    if(level){
-      if(key==='tower')tower(root,x,z,level);
-      if(key==='lumber'){
-        house(root,x,z,1.1);
-        for(let i=0;i<4;i++){const log=part(root,'cylinder','#916b42',[x-.5+i*.28,.28,z+.9],[.13,.85,.13]);log.rotation.x=Math.PI/2;}
-      }
-      if(key==='quarry'){
-        for(let i=0;i<5;i++)part(root,'sphere','#91a39a',[x+(i%3-1)*.35,.2+(i%2)*.1,z+(i%2)*.3],[.33,.3,.3]);
-        part(root,'box','#765940',[x,.8,z],[1.2,.12,.13]);
-        for(const a of [-.55,.55])part(root,'box','#765940',[x+a,.45,z],[.12,.9,.13]);
-      }
-      if(key==='wall')for(let i=0;i<5;i++)part(root,'box',i%2?'#75867e':'#94a18c',[x-.6+i*.3,.5,z],[.3,1,.55]);
-    }else{
-      const ring=part(root,'ring','#9acbb3',[x,.2,z],[.72,.72,.72],true);ring.rotation.x=-Math.PI/2;
-      for(const a of [-.55,.55])for(const b of [-.45,.45])part(root,'box','#b9a078',[x+a,.35,z+b],[.075,.6,.075]);
+    const x=pos.x/UNIT,z=pos.y/UNIT,level=fort.buildings[key]||0,project=fort.project?.type===key;
+    const progress=level?1:project?Math.min(1,fort.project.progress/fort.project.required):0;
+    if(key==='tower'){
+      if(level||project){for(const [tx,tz] of [[-halfWidth,-halfDepth],[halfWidth,-halfDepth],[-halfWidth,halfDepth],[halfWidth,halfDepth]]){const asset=octagonalTower(root,tx,tz,level||1,progress);if(project)root.userData.constructionAssets.push(asset);}}
+    }else if(key==='lumber'){
+      if(level||project){const asset=cottage(root,x,z,'storage',progress);if(project)root.userData.constructionAssets.push(asset);}
+    }else if(key==='quarry'){
+      if(level||project){const asset=cottage(root,x,z,'workshop',progress);if(project)root.userData.constructionAssets.push(asset);}
+    }else if(key==='wall'){
+      // Stone perimeter geometry is created above, with its opening aligned to the eastern path.
     }
-    const shortName={tower:'Torre',lumber:'Madeireira',quarry:'Pedreira',wall:'Muralha'}[key];
-    const title=label(`${shortName} · ${level?'Nv. '+level:'Construir'}`,2.8,.27);
-    title.position.set(x,.3,z+.95);root.add(title);
-    if(!level){const def=SITE_DEFS[key],cost=label(`${def.wood} MAD · ${def.stone} PED`,2.6,.2);cost.position.set(x,.08,z+1.22);root.add(cost);}
+    if(!level){
+      const ring=part(root,'ring',palette.blueprint,[x,.08,z],[.56,.56,.56],true);ring.rotation.x=-Math.PI/2;
+      for(const sx of [-1,1])for(const sz of [-1,1])part(root,'box',palette.blueprint,[x+sx*.49,.16,z+sz*.37],[.055,.34,.055]);
+    }
   }
-  const name=label(REGIONS[index]?.name||'Fortaleza',4,.35);name.position.set(0,.4,3.9);root.add(name);
+  const materialPiles=[];
+  if(fort.project){
+    const pos=SITE_POSITIONS[fort.project.type],pile=group(root,[pos.x/UNIT+.82,.04,pos.y/UNIT+.18]);
+    const woodFraction=Number.isFinite(fort.project.woodRequired)?fort.project.woodDelivered/fort.project.woodRequired:fort.project.progress/fort.project.required;
+    const stoneFraction=Number.isFinite(fort.project.stoneRequired)?fort.project.stoneDelivered/fort.project.stoneRequired:fort.project.progress/fort.project.required;
+    for(let i=0;i<6;i++){
+      const log=group(pile,[0,0,Math.floor(i/2)*.2]);part(log,'cylinder',i%2?palette.woodLight:palette.wood,[0,.08,0],[.12,.72,.12]).rotation.z=Math.PI/2;
+      const threshold=(i+1)/6;log.visible=woodFraction>=threshold;materialPiles.push({mesh:log,kind:'wood',threshold});
+      const block=group(pile,[.38,.02,Math.floor(i/2)*.22]);part(block,'sphere',i%2?palette.stoneLight:palette.stone,[0,.11,0],[.23,.23,.23]);
+      block.visible=stoneFraction>=threshold;materialPiles.push({mesh:block,kind:'stone',threshold});
+    }
+  }
+  root.userData.materialPiles=materialPiles;
   const workers=[];
-  for(const [role,def] of Object.entries(WORKERS)){
-    const hired=fort.workers.some(w=>w.role===role),actor=humanoid(role==='guard'?'guardian':'ranger');actor.scale.setScalar(.66);
+  for(const [role,def] of Object.entries(WORKERS))if(fort.workers.some(w=>w.role===role)){
+    const actor=humanoid(role==='guard'?'guardian':'ranger');actor.scale.setScalar(.5);actor.userData.workerRole=role;actor.userData.home=[def.x/UNIT,WORKER_Y/UNIT];
+    part(actor,'box',role==='miner'?'#818f92':'#9b7046',[.24,1.32,-.22],[.26,.3,.22]);
     actor.position.set(def.x/UNIT,.1,WORKER_Y/UNIT);root.add(actor);workers.push(actor);
-    const title=label(`${def.name} · ${hired?'Contratado':def.gold+' ouro'}`,2,.22);title.position.copy(actor.position).add(new T.Vector3(0,1.65,0));root.add(title);
   }
-  const project=group(root);project.visible=false;project.userData.dynamic=true;
-  part(project,'box','#233d3c',[0,0,0],[1.8,.15,.04]);
-  const fill=part(project,'box','#f5cc78',[0,0,.04],[1.7,.1,.04],true);
-  root.userData.project={root:project,fill};root.userData.workers=workers;
-  const integrity=label(`Fortaleza · ${Math.round(fort.integrity)}%`,2.8,.22);integrity.position.set(0,2.5,-.2);root.add(integrity);
+  const projectBar=group(root);projectBar.visible=false;projectBar.userData.dynamic=true;
+  part(projectBar,'box','#233d3c',[0,0,0],[1.8,.15,.04]);
+  const fill=part(projectBar,'box','#f5cc78',[0,0,.04],[1.7,.1,.04],true);
+  root.userData.project={root:projectBar,fill};root.userData.workers=workers;
   return compileModel(root);
 }
 export function createGate(label,next){

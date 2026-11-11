@@ -11,6 +11,7 @@ RPG de sobrevivência e exploração para navegador, **3D em WebGL com Three.js*
 - Colete XP e escolha melhorias ao subir de nível. `Esc` ou `P` pausa o jogo.
 - As expedições não têm duração fixa; minibosses aparecem nos níveis 5, 15, 25… e chefes principais nos níveis 10, 20, 30…
 - Colete recursos em exploração, construa e melhore edifícios e contrate trabalhadores para automatizar produção e defesa.
+- Prepare um canteiro com `E`, fique na área para entregar madeira e pedra e veja fundação, paredes e cobertura aparecerem em etapas; trabalhadores contratados também carregam o estoque até obras ativas.
 - Lenhadores e mineradores continuam produzindo por até 24 horas offline. Construções e incursões só avançam enquanto o jogo está aberto.
 - A área interna de cada base bloqueia monstros, investidas, projéteis inimigos e esporos. A entrada continua livre para o herói.
 - Torres e sentinelas enfrentam incursões; muralhas reduzem danos. Repare uma fortaleza violada no núcleo da base.
@@ -29,7 +30,7 @@ RPG de sobrevivência e exploração para navegador, **3D em WebGL com Three.js*
 
 Um único personagem humanoide articulado assume três formas: Guerreiro, Arcanista e Andarilho. Corpo, pivôs e animações são compartilhados; equipamento, traje e habilidades definem a forma escolhida. O menu exibe uma prévia 3D animada e o retrato da HUD usa a mesma aparência.
 
-Cada espécie de monstro tem modelo próprio. Árvores, pedras, cristais, fortalezas, canteiros, trabalhadores, portais, drops, projéteis e perigos são renderizados no mesmo espaço 3D. A câmera em perspectiva acompanha o herói; a roda do mouse ajusta a distância. Superfícies rígidas são agrupadas por articulação e o terreno usa instâncias para reduzir o custo das hordas.
+Cada espécie de monstro tem modelo próprio. Árvores, pedras, cristais, fortalezas, canteiros, trabalhadores, portais, drops, projéteis e perigos são renderizados no mesmo espaço 3D. As bases combinam muralhas modulares com ameias, portão em arco aberto, torres octogonais, abrigo, depósito e oficina com telhados modelados por geometria procedural. A câmera em perspectiva acompanha o herói; a roda do mouse ajusta a distância. Superfícies rígidas são agrupadas por articulação e o terreno usa instâncias para reduzir o custo das hordas.
 
 Os dados antigos de poses 2D permanecem preservados como referência; a partida usa as animações do modelo 3D. Ouro, campanha e melhorias continuam nos mesmos saves locais.
 

@@ -34,6 +34,14 @@ if(params.has('showcase')||params.has('stress')){
  game.hazards=[{x:game.player.x+300,y:game.player.y+60,radius:60,life:9,warmup:2}];
  window.__ETER_DEV__.ui.update(game,true);game.render();
 }
+if(params.has('construction')){
+ const {game,ui}=window.__ETER_DEV__;game.start(params.get('form')||'guardian');cancelAnimationFrame(game.raf);game.paused=true;
+ const rawProgress=Number(params.get('progress')),progress=Math.max(0,Math.min(1,Number.isFinite(rawProgress)?rawProgress/100:.5)),fort=game.campaign.fortresses[0];
+ fort.buildings={tower:0,lumber:0,quarry:0,wall:0};
+ fort.project={type:'wall',progress:12*progress,required:12,woodRequired:30,stoneRequired:20,woodDelivered:30*progress,stoneDelivered:20*progress};
+ ui.update(game,true);game.render();
+}
+if(params.has('metrics')){report.hidden=false;report.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;max-width:420px;padding:8px 10px;border-radius:7px;background:#10252be8;color:#f5ead0;font:11px ui-monospace,monospace;pointer-events:none';}
 </script>`;
 const safeHtml=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 document.open();document.write(safeHtml.replace('<head>','<head><base href="/">').replace('</body>',bootstrap+'</body>'));document.close();

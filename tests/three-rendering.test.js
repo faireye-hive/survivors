@@ -37,8 +37,27 @@ test('todas as espécies possuem geometria tridimensional e animação finita',(
 test('fortalezas e portais materializam edifícios, locais vazios e obra em andamento',()=>{
   const label=()=>new T.Group();
   const fort=createFortress(2,{buildings:{tower:2,lumber:1,quarry:0,wall:1},workers:[{role:'guard'}],integrity:85},label);
-  assert.equal(fort.position.x,72);assert.ok(fort.userData.project.fill);assert.equal(fort.userData.workers.length,3);validModel(fort);
+  assert.equal(fort.position.x,72);assert.ok(fort.userData.project.fill);assert.equal(fort.userData.workers.length,1);validModel(fort);
   validModel(createGate(label,{name:'Veyra',cost:180,wood:25,stone:12}));
+});
+test('a fortaleza tem perímetro de pedra, portão aberto e volumes próprios para cada instalação',()=>{
+  const root=createFortress(0,{buildings:{tower:1,lumber:1,quarry:1,wall:1},workers:[],integrity:100},()=>new T.Group());
+  const names=[];root.traverse(node=>{if(node.name)names.push(node.name);});
+  assert.equal(names.filter(name=>name==='Crenellated stone wall').length,5);
+  for(const name of ['Open arched gate','Octagonal watchtower','Player shelter','Resource depot','Production workshop'])assert.ok(names.includes(name),name);
+  validModel(root);
+});
+test('etapas de uma torre revelam fundação, fuste e ameias em sequência',()=>{
+  const root=createFortress(0,{buildings:{tower:0,lumber:0,quarry:0,wall:0},project:{type:'tower',progress:3,required:10},workers:[],integrity:100},()=>new T.Group());
+  const tower=root.userData.constructionAssets[0];
+  tower.userData.setProgress(0);
+  assert.equal(tower.children[0].visible,false);
+  tower.userData.setProgress(.2);
+  assert.equal(tower.children[0].visible,true);
+  assert.equal(tower.children[1].visible,false);
+  tower.userData.setProgress(.9);
+  assert.ok(tower.children.every(stage=>stage.visible));
+  validModel(root);
 });
 test('sincronização remove modelos mortos e expirados sem acumular objetos na cena',()=>{
   const renderer=Object.create(Renderer3D.prototype);renderer.collections=new Map();renderer.scene=new T.Scene();
