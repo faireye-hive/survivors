@@ -45,7 +45,7 @@ O asset combina sólidos sobrepostos e pequenas superfícies decorativas; é des
 - 30 combinações de seed, escala e quantidade de cristais, com posições finitas, normais, orientação, áreas e bounds conferidos.
 - Reprodução, independência da ordem de geração, alteração de cor/desgaste sem mudar a rocha e escala uniforme.
 - 15 regenerações com preservação de transformações, cena e elementos externos, além de descarte e rejeição de entradas inválidas.
-- Exportação e reabertura por GLTFLoader, conferindo geometria, materiais, dimensões e correspondência ao artefato publicado.
+- Exportação e reabertura por GLTFLoader, conferindo geometria, materiais, dimensões e correspondência geométrica ao artefato publicado com tolerância numérica. A reprodução binária é conferida entre duas execuções no mesmo runtime; a serialização de cores pode variar nos últimos dígitos entre versões do V8.
 - Inspeção no navegador sob luz de fronteira e neutra, outra seed, download GLB, layout móvel e recurso na câmera real do jogo.
 - `npm test`, `npm run build` e `git diff --check`. O build mantém o aviso de bundle JavaScript acima de 500 kB.
 

@@ -67,13 +67,34 @@ test('regeneração preserva identidade, composição e objetos externos e desca
   assert.throws(()=>regenerateAetherOre(root));
 });
 test('GLB pode ser reaberto e corresponde ao asset publicado e aos seus parâmetros',async()=>{
-  const {buffer,manifest}=await exportOre();
+  const {buffer,manifest}=await exportOre(),repeat=await exportOre();
+  // Exact reproduction is asserted within this runtime. V8 versions may
+  // serialize material colors with slightly different final decimal digits.
+  assert.deepEqual(Buffer.from(buffer),Buffer.from(repeat.buffer));
   const glb=await readFile(new URL('../public/models/aether-ore.glb',import.meta.url));
-  assert.deepEqual(Buffer.from(buffer),glb);
-  const stored=JSON.parse(await readFile(new URL('../public/models/aether-ore.json',import.meta.url),'utf8'));assert.deepEqual(manifest,stored);
-  const result=await new GLTFLoader().parseAsync(buffer,'');
-  let triangles=0,meshes=0;result.scene.traverse(n=>{if(n.isMesh){meshes++;triangles+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;assert.ok(n.material.vertexColors);n.geometry.dispose();n.material.dispose();}});
-  assert.equal(triangles,manifest.triangles);assert.equal(meshes,manifest.materials);
-  const size=new T.Box3().setFromObject(result.scene).getSize(new T.Vector3()).toArray();
-  size.forEach((v,i)=>assert.ok(Math.abs(v-manifest.size[i])<1e-5));
+  const stored=JSON.parse(await readFile(new URL('../public/models/aether-ore.json',import.meta.url),'utf8'));
+  for(const key of ['asset','generatorVersion','threeRevision','units','upAxis','origin','parameters','triangles','materials'])assert.deepEqual(manifest[key],stored[key]);
+  assert.equal(stored.bytes,glb.byteLength);assert.equal(manifest.bytes,buffer.byteLength);
+  const fresh=await new GLTFLoader().parseAsync(buffer,'');
+  const published=await new GLTFLoader().parseAsync(glb.buffer.slice(glb.byteOffset,glb.byteOffset+glb.byteLength),'');
+  const meshes=root=>{const list=[];root.traverse(n=>{if(n.isMesh)list.push(n);});return list;};
+  const generatedMeshes=meshes(fresh.scene),publishedMeshes=meshes(published.scene);
+  assert.equal(generatedMeshes.length,publishedMeshes.length);
+  for(let i=0;i<generatedMeshes.length;i++){
+    const a=generatedMeshes[i],b=publishedMeshes[i];assert.equal(a.name,b.name);
+    assert.deepEqual(Object.keys(a.geometry.attributes),Object.keys(b.geometry.attributes));
+    for(const key of Object.keys(a.geometry.attributes)){
+      const x=a.geometry.attributes[key].array,y=b.geometry.attributes[key].array;assert.equal(x.length,y.length);
+      for(let j=0;j<x.length;j++)assert.ok(Math.abs(x[j]-y[j])<1e-6,`${a.name}: ${key}[${j}]`);
+    }
+    assert.deepEqual(a.geometry.index?.array,b.geometry.index?.array);
+    assert.deepEqual(a.matrix.toArray(),b.matrix.toArray());
+    for(const key of ['roughness','metalness','emissiveIntensity'])assert.equal(a.material[key],b.material[key]);
+    for(const key of ['color','emissive'])a.material[key].toArray().forEach((v,j)=>assert.ok(Math.abs(v-b.material[key].toArray()[j])<1e-12));
+  }
+  let triangles=0;published.scene.traverse(n=>{if(n.isMesh){triangles+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;assert.ok(n.material.vertexColors);}});
+  assert.equal(triangles,stored.triangles);assert.equal(publishedMeshes.length,stored.materials);
+  const size=new T.Box3().setFromObject(published.scene).getSize(new T.Vector3()).toArray();
+  size.forEach((v,i)=>{assert.ok(Math.abs(v-stored.size[i])<1e-5);assert.ok(Math.abs(v-manifest.size[i])<1e-5);});
+  for(const m of [...generatedMeshes,...publishedMeshes]){m.geometry.dispose();m.material.dispose();}
 });
