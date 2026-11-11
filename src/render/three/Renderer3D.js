@@ -4,6 +4,7 @@ import {Terrain,UNIT,createFortress,createGate,disposeEnvironment} from './Envir
 import {REGIONS,SITE_POSITIONS} from '../../storage/Campaign.js';
 import {threatAt} from '../../data/difficulty.js';
 import {createAetherOre} from './assets/AetherOre.js';
+import {releaseWarriorActor} from './assets/WarriorActor.js';
 
 const point=new T.Vector3();
 export class Renderer3D{
@@ -50,6 +51,7 @@ export class Renderer3D{
     sprite.scale.set(width,height*1.7,1);sprite.userData.ownMaterial=true;return sprite;
   }
   release(root){
+    releaseWarriorActor(root);
     this.scene.remove(root);disposeEnvironment(root);
     root.traverse(o=>{if(o.userData.ownMaterial)o.material.dispose();});
   }
@@ -84,6 +86,7 @@ export class Renderer3D{
     this.terrain.update(game);
     if(this.heroClass!==p.classId){if(this.hero)this.release(this.hero);this.hero=humanoid(p.classId);this.scene.add(this.hero);this.heroClass=p.classId;}
     this.hero.position.set(px,0,pz);animateActor(this.hero,p,t);
+    this.canvas.dataset.heroModel=this.hero.userData.asset||'procedural';
     const aura=game.weapons.find(w=>w.id==='aura');
     if(aura&&!this.aura){this.aura=this.effect('#88d5b4',1);this.scene.add(this.aura);}
     if(this.aura){this.aura.visible=!!aura;if(aura){this.aura.position.set(px,0,pz);this.aura.scale.setScalar((92+aura.level*11)/UNIT);this.aura.userData.surface.material.opacity=.35;}}

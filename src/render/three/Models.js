@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {attachDetailedWarrior} from './assets/WarriorActor.js';
 
 // Shared low-poly geometry: every character is a lit, articulated 3D model.
 const geometries=new Map(),materials=new Map();
@@ -108,7 +109,8 @@ export function humanoid(type='guardian'){
     for(const x of [-.24,.24])part(head,'cone',primary,[x,.32,0],[.13,.42,.15]);
     root.scale.setScalar(1.8);
   }
-  root.userData.rig={left,right,armL,armR,head,type};return compileModel(root);
+  root.userData.rig={left,right,armL,armR,head,type};compileModel(root);
+  return type==='guardian'?attachDetailedWarrior(root):root;
 }
 export function creature(type){
   if(['skeleton','colossus'].includes(type))return humanoid(type);
@@ -154,7 +156,9 @@ export function animateActor(root,actor,time){
   const phase=time*10+(actor.id||0),stride=moving?Math.sin(phase)*.65:Math.sin(time*2)*.025;
   model.rotation.y=Math.PI/2-(actor.facing??Math.atan2(actor.vy||0,actor.vx||0));
   model.position.y=moving?Math.abs(Math.sin(phase))*.045:Math.sin(time*2)*.015;
-  if(rig){
+  if(root.userData.animateWarrior){
+    model.position.y=0;root.userData.animateWarrior(actor,time);
+  }else if(rig){
     rig.left.rotation.x=stride;rig.right.rotation.x=-stride;
     rig.armL.rotation.x=-stride*.6;rig.armR.rotation.x=stride*.6;
     if(actor.attackPose>0)rig.armR.rotation.x=-1.6*Math.sin((1-actor.attackPose/.27)*Math.PI);

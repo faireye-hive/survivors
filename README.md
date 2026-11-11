@@ -34,6 +34,8 @@ Cada espécie de monstro tem modelo próprio. Árvores, pedras, cristais, fortal
 
 Os dados antigos de poses 2D permanecem preservados como referência; a partida usa as animações do modelo 3D. Ouro, campanha e melhorias continuam nos mesmos saves locais.
 
+O [estúdio do guerreiro](character.html) permite inspecionar o personagem detalhado a partir do sample fornecido, com pintura em 4K, materiais PBR e duas densidades de malha. É um asset estático, disponível em GLB e Blender; veja [reprodução e arquivos](docs/FANTASY_WARRIOR.md).
+
 ## Executar e validar
 
 Requer Node.js 20+:
@@ -191,3 +193,5 @@ A skill [`procedural-3d`](skills/procedural-3d/SKILL.md) reúne direção de art
 Os recursos coletáveis de pedra usam um afloramento procedural com fraturas, estratos, líquens e cristais de Éter. O gerador expõe seed, escala, desgaste, quantidade e cor dos cristais; a regeneração preserva a posição do asset e descarta os recursos substituídos. O modelo padrão tem **746 triângulos e 3 materiais**, sem texturas externas.
 
 Use `npm run model:export` para gerar o [GLB](public/models/aether-ore.glb) e o manifesto. Durante o desenvolvimento, abra `/tests/fixtures/aether-ore.html` para ajustar e inspecionar o modelo. Veja [API, parâmetros, preview e validação](docs/AETHER_ORE.md).
+
+O Guardião usa o guerreiro detalhado animado no menu e no jogo. O estúdio em `/character.html` também permite conferir os três clipes. Processo reutilizável: [Character 3D Studio](.agents/skills/character-3d-studio/SKILL.md).

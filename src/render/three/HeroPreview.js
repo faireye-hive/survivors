@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {humanoid,animateActor,part,group} from './Models.js';
+import {releaseWarriorActor} from './assets/WarriorActor.js';
 
 // The class picker dresses the same articulated hero in three equipment sets.
 export class HeroPreview{
@@ -19,10 +20,11 @@ export class HeroPreview{
       const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
       if(w!==this.width||h!==this.height){this.width=w;this.height=h;this.gpu.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
       animateActor(this.actor,{vx:0,vy:0,facing:.75+Math.sin(now*.00035)*.6},now/1000);
+      this.canvas.dataset.heroModel=this.actor.userData.asset||'procedural';
       this.gpu.render(this.scene,this.camera);
     };this.raf=requestAnimationFrame(this.animate);
   }
-  releaseActor(){if(this.actor){this.scene.remove(this.actor);this.actor.traverse(o=>{if(o.userData.ownGeometry)o.geometry.dispose();});}}
+  releaseActor(){if(this.actor){releaseWarriorActor(this.actor);this.scene.remove(this.actor);this.actor.traverse(o=>{if(o.userData.ownGeometry)o.geometry.dispose();});}}
   setForm(form){if(this.form===form)return;this.releaseActor();this.actor=humanoid(form);this.scene.add(this.actor);this.form=form;this.canvas.setAttribute('aria-label','Herói 3D · '+({guardian:'Guerreiro',mage:'Arcanista',ranger:'Andarilho'}[form]||form));}
   capture(){
     const w=this.width||360,h=this.height||190;this.gpu.setSize(w,h,false);

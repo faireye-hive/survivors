@@ -1,0 +1,4 @@
+interface:
+  display_name: "Character 3D Studio"
+  short_description: "Personagens 3D com pintura, rig e integração"
+  default_prompt: "Use $character-3d-studio para criar ou refinar um personagem 3D detalhado e integrá-lo ao projeto."
