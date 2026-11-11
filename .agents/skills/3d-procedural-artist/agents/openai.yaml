@@ -1,0 +1,4 @@
+interface:
+  display_name: 3D Procedural Artist
+  short_description: Construções e malhas 3D procedurais para jogos
+  default_prompt: Crie uma construção 3D detalhada e otimizada para meu jogo, sem Blender, com paredes, telhado, materiais e progresso visual de construção.
