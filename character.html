@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guerreiro · Crônicas do Éter</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,sans-serif;background:#10151f;color:#e7e5e0;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0}button,select,a{font:inherit}button,select{color:inherit;background:#1c2432;border:1px solid #364052;border-radius:6px;padding:10px 12px;cursor:pointer}button:hover,button[aria-pressed=true]{border-color:#cfac6b;background:#30303a}button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #edca87;outline-offset:3px}button:disabled{opacity:.5;cursor:wait}a{color:#dfbd7b;text-decoration:none}header{height:78px;display:flex;align-items:center;justify-content:space-between;padding:0 38px;border-bottom:1px solid #ffffff10}header span{font-size:11px;letter-spacing:.25em;color:#a8b3c4}header a{font-size:12px}main{height:calc(100svh - 78px);min-height:640px;display:grid;grid-template-columns:minmax(0,1fr) 308px}.stage{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#283144 0,#141c29 55%,#10151f 90%)}canvas{width:100%;height:100%;display:block;touch-action:none}.caption{position:absolute;left:36px;top:28px;pointer-events:none}.eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#cba767}h1{font-family:Georgia,serif;font-weight:400;font-size:38px;line-height:1.1;margin:10px 0}.caption p{font-size:12px;color:#9ca8b9;margin:0}.hint{position:absolute;bottom:24px;left:36px;font-size:11px;color:#8a99ad;pointer-events:none}.badge{position:absolute;right:24px;top:30px;font-size:10px;letter-spacing:.13em;color:#9ca8b9}.panel{border-left:1px solid #ffffff10;padding:32px 26px;overflow:auto;background:#111823}h2{font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:500;color:#a3afbe;margin:0 0 16px}.section{padding:0 0 27px;margin:0 0 25px;border-bottom:1px solid #ffffff10}.row{display:flex;gap:7px;flex-wrap:wrap}.row button{flex:1;font-size:12px;padding:10px 8px}.panel p{color:#a7afbd;line-height:1.65;font-size:12px;margin:12px 0 0}label{display:block;font-size:12px;color:#b5becb;margin:16px 0 8px}select{width:100%;font-size:12px}#status{font-variant-numeric:tabular-nums;white-space:pre-line;font-size:12px;color:#bbc6d5;line-height:1.9}.download{display:block;text-align:center;border:1px solid #ad8c52;border-radius:6px;padding:12px;background:#302a23;font-size:13px}#error{color:#ffad9f;line-height:1.6;font-size:12px;white-space:pre-wrap}footer{font-size:10px;color:#778498;margin-top:18px;line-height:1.7}#load{position:absolute;inset:0;display:grid;place-items:center;background:#111824b3;font-size:13px;color:#d0b786;pointer-events:none}#load[hidden]{display:none}
+    @media(max-width:760px){header{padding:0 20px;height:60px}header span{font-size:9px;letter-spacing:.15em}main{height:auto;min-height:0;display:block}.stage{height:75svh;min-height:540px}.panel{padding:24px;border-left:0;border-top:1px solid #ffffff10}.caption{left:22px;top:20px}h1{font-size:28px}.badge{display:none}.hint{left:22px}.section{padding-bottom:20px;margin-bottom:20px}}
+  </style>
+</head>
+<body>
+  <header><span>CRÔNICAS DO ÉTER / PERSONAGENS</span><a href="./">Voltar ao jogo ↗</a></header>
+  <main>
+    <section class="stage" aria-label="Visualizador tridimensional do guerreiro">
+      <canvas id="warrior" aria-label="Modelo 3D do guerreiro; arraste para girar e use a roda para aproximar"></canvas>
+      <div class="caption"><div class="eyebrow">Estudo de personagem · 01</div><h1>Guerreiro</h1><p>Couro, ouro e índigo.</p></div>
+      <span class="badge">FANTASY WARRIOR</span><span class="hint">Arraste para girar · Role para aproximar</span>
+      <div id="load" role="status">Carregando personagem…</div>
+    </section>
+    <aside class="panel">
+      <div class="section"><h2>Enquadramento</h2><div class="row"><button data-view="front">Frente</button><button data-view="three" aria-pressed="true">¾</button><button data-view="back">Costas</button></div><div class="row" style="margin-top:8px"><button data-view="face">Rosto</button><button data-view="profile">Perfil</button><button id="rotate" aria-pressed="false">Girar</button></div></div>
+      <div class="section"><h2>Acabamento</h2><label for="light">Iluminação</label><select id="light"><option value="studio">Estúdio</option><option value="neutral">Neutra</option></select><label for="surface">Superfície</label><select id="surface"><option value="painted">Pintura e materiais</option><option value="clay">Escultura neutra</option><option value="wire">Malha</option></select></div>
+      <div class="section"><h2>Modelo</h2><label for="quality">Geometria</label><select id="quality"><option value="game">Jogo · animado</option><option value="standard">Otimizada · 4K</option><option value="high">Escultura completa</option></select><label for="animation">Animação</label><select id="animation"><option value="Idle">Repouso</option><option value="Walk">Caminhada</option><option value="Attack">Ataque</option><option value="none">Pose base</option></select><p id="status" aria-live="polite">Preparando…</p><p>Pintura PBR e nariz esculpido. Versão de jogo com esqueleto e três animações; versões estáticas com pintura em 4K.</p></div>
+      <a class="download" id="download" href="./models/warrior/fantasy-warrior.glb" download>Baixar modelo .glb ↓</a><p id="error" role="alert"></p><footer>Modelo 3D com texturas incorporadas.<br>Compatível com Blender e carregadores glTF.</footer>
+    </aside>
+  </main>
+  <script type="module" src="/src/render/three/WarriorStudio.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "name": "Fantasy Warrior",
+  "source": "sample_2026-11-05T020431.286.glb",
+  "heightMeters": 1.85,
+  "upAxis": "Y",
+  "forwardAxis": "+Z",
+  "pivot": "ground center",
+  "rigged": false,
+  "animations": [],
+  "seed": 0,
+  "blender": "5.3.0",
+  "sourceTriangles": 283318,
+  "triangles": 67919,
+  "vertices": 32581,
+  "reductionRatio": 0.24,
+  "noseProjectionAddedMeters": 0.018,
+  "textures": {
+    "baseColor": "4096x4096 sRGB",
+    "normal": "2048x2048 tangent +Y",
+    "orm": "2048x2048 linear, R=1/G=roughness/B=metallic"
+  },
+  "limitations": [
+    "Original single-mesh topology retained; not animation retopology.",
+    "Front/back projection paint blends to original texture on occluded and grazing surfaces.",
+    "No skeleton or animations."
+  ],
+  "game": {
+    "file": "fantasy-warrior-game.glb",
+    "rigged": true,
+    "bones": 19,
+    "animations": [
+      "Idle",
+      "Walk",
+      "Attack"
+    ],
+    "baseColorResolution": 2048,
+    "dataMapResolution": 1024,
+    "bytes": 13099028
+  }
+}
