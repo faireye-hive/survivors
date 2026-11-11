@@ -5,30 +5,44 @@ import { getProfile,calculateRunGold,buyPermanentUpgrade } from '../storage/Prof
 import {renderShopGrid} from './MetaShop.js';
 import {createUpgradeIcon} from './UpgradeIcons.js';
 import { hudStats, minimapMarkers, MINIMAP_RADIUS } from './HudData.js';
+import {campaignSummary,getCampaign} from '../storage/Campaign.js';
+import {HeroPreview} from '../render/three/HeroPreview.js';
 
 export class Interface {
   constructor(){
     this.el={};
     const ids=['menu','hud','level-screen','pause-screen','end-screen','best-label','best-kills',
-      'hero-name','level-label','hp-fill','hp-label','armor-label','might-label',
-      'xp-fill','xp-label','time-label','kills-label','bottom-hp','bottom-armor',
-      'bottom-might','bottom-speed','weapon-list','upgrade-options','level-up-number',
+      'menu-runs','menu-kills','menu-level','class-readout','class-readout-weapon',
+      'class-readout-hp','class-readout-armor','class-readout-speed',
+      'hero-name','hero-portrait','level-label','hp-fill','hp-label','armor-label','might-label','top-speed',
+      'bottom-hp','bottom-armor','bottom-might','bottom-speed',
+      'xp-fill','xp-label','time-label','kills-label','weapon-list','upgrade-options','level-up-number',
       'end-kicker','end-title','end-description','end-time','end-kills','end-level',
       'sound-toggle','minimap','minimap-panel','hud-map-button','hud-info',
       'hud-info-title','hud-info-content','hud-info-close',
       'shop-screen','shop-grid','shop-gold','shop-message','menu-gold',
       'end-gold-earned','end-gold-wallet','run-gold-preview',
+      'world-interact',
+      'world-gold','world-wood','world-stone',
+      'base-name','base-status','base-goal','base-production',
       'boss-health','boss-health-name','boss-health-level',
       'boss-health-fill','boss-health-numbers'];
     for(const id of ids)this.el[id]=document.getElementById(id);
     this.classId='guardian';this.game=null;this.lastHud=0;this.lastWeapons='';
+    const preview=document.getElementById('hero-preview');
+    if(preview)this.heroPreview=new HeroPreview(preview);
     this.currentPanel=null;this.miniExpanded=false;
     this.miniCtx=this.el.minimap.getContext('2d');
     document.querySelectorAll('[data-class]').forEach(btn=>btn.addEventListener('click',()=>{
       this.classId=btn.dataset.class;
-      document.querySelectorAll('[data-class]').forEach(el=>
-        el.classList.toggle('active',el.dataset.class===this.classId));
+      document.querySelectorAll('[data-class]').forEach(el=>{
+        const selected=el.dataset.class===this.classId;
+        el.classList.toggle('active',selected);
+        el.setAttribute('aria-pressed',String(selected));
+      });
+      this.renderClassReadout();
     }));
+    this.renderClassReadout();
   }
   connect(game){
     this.game=game;
@@ -41,6 +55,7 @@ export class Interface {
     action('again-button',()=>game.start(game.lastClass));
     action('end-menu',()=>game.backToMenu());
     action('open-shop',()=>this.showShop());
+    action('world-interact',()=>game.interact());
     action('end-shop',()=>this.showShop());
     action('shop-close',()=>this.closeShop());
     this.el['shop-grid'].addEventListener('click',event=>{
@@ -80,6 +95,7 @@ export class Interface {
   }
   showMenu(){
     this.hideScreens();this.el.hud.hidden=true;this.el.menu.hidden=false;
+    this.el['world-interact'].hidden=true;
     this.closeInfo();
     const best=getProfile();
     this.el['menu-gold'].textContent=best.gold.toLocaleString('pt-BR');
@@ -87,12 +103,31 @@ export class Interface {
     this.el['best-kills'].textContent=best.runs?
       best.bestKills+' inimigos derrotados • '+best.runs+' partidas':
       'Seu primeiro legado começa agora.';
+    this.el['menu-runs'].textContent=best.runs.toLocaleString('pt-BR');
+    this.el['menu-kills'].textContent=best.bestKills.toLocaleString('pt-BR');
+    this.el['menu-level'].textContent=String(best.bestLevel||1);
+    this.renderClassReadout();
+  }
+  renderClassReadout(){
+    const hero=CLASSES[this.classId]||CLASSES.guardian;
+    this.heroPreview?.setForm(this.classId);
+    const weapon=WEAPONS[hero.weapon];
+    this.el['class-readout'].style.setProperty('--class-accent',hero.color);
+    this.el['class-readout-weapon'].textContent=weapon?.name||'Habilidade automática';
+    this.el['class-readout-hp'].textContent=hero.hp;
+    this.el['class-readout-armor'].textContent=hero.armor;
+    this.el['class-readout-speed'].textContent=hero.speed;
   }
   showPlaying(){
+    if(this.heroPreview&&this.game){
+      this.heroPreview.setForm(this.game.player.classId);
+      this.el['hero-portrait'].src=this.heroPreview.capture();
+    }
     this.hideScreens();this.el.hud.hidden=false;
     if(this.game)this.update(this.game,true);
   }
   showPause(paused){
+    this.el['world-interact'].hidden=true;
     this.el['pause-screen'].hidden=!paused;
     if(!paused)this.showPlaying();
   }
@@ -129,13 +164,14 @@ export class Interface {
   }
   showEnd(game,won){
     this.hideScreens();this.el.hud.hidden=true;this.closeInfo();
+    this.el['world-interact'].hidden=true;
     this.el['end-screen'].hidden=false;
     this.el['end-kicker'].textContent=won?
       '✦ O ÉTER RECONHECE SUA VITÓRIA ✦':'✧ A NÉVOA REIVINDICOU UM HERÓI ✧';
     this.el['end-title'].textContent=won?'Lenda imortal':'A jornada terminou';
     this.el['end-description'].textContent=won?
-      'Você resistiu a todas as ondas! O ouro conquistado financia a próxima aventura.':
-      'A tentativa terminou, mas seu ouro foi guardado. Evolua na loja e tente ir mais longe.';
+      'A fronteira foi explorada por completo. O ouro conquistado financia a próxima expedição.':
+      'Esta expedição terminou, mas sua fortaleza, seus recursos e o ouro conquistado continuam guardados.';
     this.el['end-time'].textContent=formatTime(game.elapsed);
     this.el['end-kills'].textContent=game.kills;
     this.el['end-level'].textContent=game.player.level;
@@ -209,14 +245,20 @@ export class Interface {
     }else if(type==='help'){
       this.el['hud-info-title'].textContent='Como jogar';
       add('p','WASD ou teclas de seta: movimentar.');
+      add('p','Roda do mouse: aproximar ou afastar a câmera 3D.');
       add('p','As habilidades atacam automaticamente quando estão prontas. Não há botão de ataque.');
       add('p','Pegue os cristais de experiência. Ao subir de nível, escolha uma melhoria.');
       add('p','A partir de 01:00 surgem Esporões que criam áreas tóxicas no chão: saia dos círculos antes de eles ativarem.');
+      add('p','Cada monstro derrotado rende ouro na hora. Alguns deixam madeira ou pedra; explore bosques para cortar madeira e ruínas para minerar pedra.');
+      add('p','Caminhe até um canteiro dentro da fortaleza e aperte E para entregar materiais. As obras avançam enquanto a expedição está ativa, mesmo quando você está explorando longe da base.');
+      add('p','Lenhadores e mineradores produzem recursos offline, até 24 horas por retorno. Torres, muralhas e sentinelas defendem a fortaleza contra incursões enquanto o jogo está aberto.');
+      add('p','A fortaleza pode sofrer danos se as defesas forem insuficientes. Volte ao núcleo da base e aperte E para reparar por 5 madeira e 5 pedra; uma base violada deixa de produzir.');
+      add('p','A passagem para a próxima região fica no portão ao lado da fortaleza. Reforce as defesas, reúna os recursos pedidos e aperte E no portão para pagar e avançar.');
       add('p','Aranhas avançam em zigue-zague. Derrote inimigos de elite dourados para coletar relíquias que aumentam seu dano.');
       add('p','A ameaça cresce com o tempo e com o nível do herói. Nível 5, 15, 25: miniboss gigante. Nível 10, 20, 30: chefe principal com projéteis circulares e vida no topo.');
       add('p','Os chefes anunciam suas investidas e ataques de área; sobreviva, derrote-os e ganhe XP e ouro bônus.');
       add('p','Na evolução, escolha pelo ícone e pelo ganho curto em destaque. Cada arma e atributo possui símbolo próprio.');
-      add('p','Ao fim de cada partida, receba ouro conforme o nível alcançado, inimigos derrotados e tempo. Gaste na loja para desbloquear poder permanente na próxima tentativa.');
+      add('p','O ouro dos monstros é guardado imediatamente, mesmo se você for derrotado. Ao fim de cada expedição também há uma recompensa adicional.');
       add('p','Esc ou P: pausar. O minimapa exibe inimigos próximos e a sua posição.');
     }
   }
@@ -276,6 +318,7 @@ export class Interface {
     this.el['hp-label'].textContent=s.hp+' / '+s.maxHp;
     this.el['armor-label'].textContent=s.armor;
     this.el['might-label'].textContent=s.mightPct+'%';
+    this.el['top-speed'].textContent=s.speed;
     this.el['bottom-hp'].textContent=s.hp;
     this.el['bottom-armor'].textContent=s.armor;
     this.el['bottom-might'].textContent=s.mightPct+'%';
@@ -287,11 +330,28 @@ export class Interface {
     this.el['xp-fill'].parentElement.setAttribute('aria-valuenow',String(s.xp));
     this.el['xp-fill'].parentElement.setAttribute('aria-valuemax',String(s.nextXp));
     this.el['time-label'].textContent=formatTime(s.elapsed);
+    this.el['world-interact'].hidden=!game.interactionHint||game.state!=='playing'||game.paused||game.nearbyInteraction?.kind==='project';
+    if(game.interactionHint)this.el['world-interact'].textContent=game.interactionHint;
+    const supplies=campaignSummary(game.campaign||getCampaign()),wallet=getProfile();
+    this.el['world-gold'].textContent=wallet.gold.toLocaleString('pt-BR');
+    this.el['world-wood'].textContent=supplies.wood.toLocaleString('pt-BR');
+    this.el['world-stone'].textContent=supplies.stone.toLocaleString('pt-BR');
+    this.el['base-name'].textContent=supplies.regionName;
+    const integrity=Math.round(supplies.integrity/supplies.maxIntegrity*100);
+    const raidLabel=integrity===0?' · violada, produção suspensa':
+      supplies.raid?.result==='repelled'?' · última incursão repelida':
+      supplies.raid?.result==='breached'?' · violada anteriormente':
+      supplies.raid?.result==='damaged'?' · sofreu danos':' · pronta para defender';
+    this.el['base-status'].textContent=`Fortaleza ${integrity}% íntegra${raidLabel}`;
+    this.el['base-production'].textContent=`Produção: +${supplies.woodPerMinute} madeira · +${supplies.stonePerMinute} pedra/min`;
+    this.el['base-goal'].textContent=supplies.nextRegion?
+      `Próxima fronteira: ${supplies.nextRegion.wood} madeira · ${supplies.nextRegion.stone} pedra · ${supplies.nextRegion.cost} ouro`:
+      'Todas as regiões foram alcançadas';
     this.el['run-gold-preview'].textContent=calculateRunGold({
       level:s.level,kills:s.kills,time:s.elapsed,
       bonusGold:game.bonusGold||0
     }).toLocaleString('pt-BR');
-    this.el['kills-label'].textContent=game.enemies.filter(e=>e.hp>0).length;
+    this.el['kills-label'].textContent=game.kills;
     const mainBoss=game.enemies.find(e=>e.boss&&e.hp>0);
     this.el['boss-health'].hidden=!mainBoss;
     if(mainBoss){

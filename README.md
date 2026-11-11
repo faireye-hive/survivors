@@ -1,6 +1,6 @@
-# ✧ Crônicas do Éter — Sobreviventes
+# ✧ Crônicas do Éter — Fronteiras
 
-RPG de sobrevivência para navegador, **100% Canvas 2D**. Enfrente hordas crescentes, colete cristais de experiência, evolua habilidades automáticas e resista durante oito minutos. Não usa Three.js, imagens externas, modelos 3D ou assets de personagens importados.
+RPG de sobrevivência e exploração para navegador, **3D em WebGL com Three.js**. Explore biomas, enfrente criaturas, reúna madeira e pedra, construa fortalezas automatizadas e expanda a fronteira. A ameaça aumenta com o tempo e o nível, mas a expedição não termina por um cronômetro fixo. O mundo, os personagens e os edifícios usam modelos 3D procedurais, iluminação e sombras reais. Requer navegador com WebGL2 e aceleração gráfica.
 
 ## Jogar
 
@@ -9,7 +9,11 @@ RPG de sobrevivência para navegador, **100% Canvas 2D**. Enfrente hordas cresce
 - **Andarilho** — adagas rápidas.
 - WASD ou setas para se mover; joystick no celular. Os ataques são **automáticos**.
 - Colete XP e escolha melhorias ao subir de nível. `Esc` ou `P` pausa o jogo.
-- A partida dura oito minutos; minibosses aparecem nos níveis 5, 15, 25… e chefes principais nos níveis 10, 20, 30…
+- As expedições não têm duração fixa; minibosses aparecem nos níveis 5, 15, 25… e chefes principais nos níveis 10, 20, 30…
+- Colete recursos em exploração, construa e melhore edifícios e contrate trabalhadores para automatizar produção e defesa.
+- Lenhadores e mineradores continuam produzindo por até 24 horas offline. Construções e incursões só avançam enquanto o jogo está aberto.
+- A área interna de cada base bloqueia monstros, investidas, projéteis inimigos e esporos. A entrada continua livre para o herói.
+- Torres e sentinelas enfrentam incursões; muralhas reduzem danos. Repare uma fortaleza violada no núcleo da base.
 
 ## Conteúdo e encontros
 
@@ -23,9 +27,11 @@ RPG de sobrevivência para navegador, **100% Canvas 2D**. Enfrente hordas cresce
 
 ## Arte e animações
 
-Os três heróis utilizam ilustrações procedurais simples em um mesmo estilo Canvas 2D. Os monstros têm suas próprias silhuetas, sem membros humanos desnecessários. Esporão e Aranha são desenhados diretamente em `src/render/characters/WildCreatures.js`.
+Um único personagem humanoide articulado assume três formas: Guerreiro, Arcanista e Andarilho. Corpo, pivôs e animações são compartilhados; equipamento, traje e habilidades definem a forma escolhida. O menu exibe uma prévia 3D animada e o retrato da HUD usa a mesma aparência.
 
-O jogo mantém as animações de caminhada aprovadas para quatro direções, além de idle, attack e hit. O antigo Rig Studio foi retirado para priorizar **conteúdo jogável**. O armazenamento local das poses não é apagado pela atualização; a representação das animações aprovadas permanece no código.
+Cada espécie de monstro tem modelo próprio. Árvores, pedras, cristais, fortalezas, canteiros, trabalhadores, portais, drops, projéteis e perigos são renderizados no mesmo espaço 3D. A câmera em perspectiva acompanha o herói; a roda do mouse ajusta a distância. Superfícies rígidas são agrupadas por articulação e o terreno usa instâncias para reduzir o custo das hordas.
+
+Os dados antigos de poses 2D permanecem preservados como referência; a partida usa as animações do modelo 3D. Ouro, campanha e melhorias continuam nos mesmos saves locais.
 
 ## Executar e validar
 
@@ -39,7 +45,7 @@ npm run build
 npm run preview
 ```
 
-Abra `http://localhost:3000`. O workflow do GitHub Pages publica a partir da branch `main`.
+Abra `http://localhost:3000`. Para validar sem alterar o progresso salvo, use `http://localhost:3000/tests/fixtures/3d-preview.html` durante o desenvolvimento. O workflow do GitHub Pages publica a partir da branch `main`.
 
 ## Organização
 
@@ -48,18 +54,20 @@ Abra `http://localhost:3000`. O workflow do GitHub Pages publica a partir da bra
 - `src/data/encounters.js`: calendário das ondas especiais.
 - `src/systems/Combat.js`: armas automáticas, combate e drop de relíquias.
 - `src/systems/Progression.js`: XP, coleta, cura e melhorias.
-- `src/render/Renderer.js`: cenário, efeitos, personagens e avisos de onda.
-- `src/render/Art.js` e `src/render/characters/`: arte procedural Canvas.
+- `src/render/three/Renderer3D.js`: câmera, luzes, sombras, sincronização do mundo e efeitos.
+- `src/render/three/Models.js`: personagem base, equipamentos, monstros e animações.
+- `src/render/three/Environment.js`: terreno instanciado, fortalezas, recursos e portais.
+- `src/render/three/HeroPreview.js`: prévia do personagem e retrato da HUD.
 - `src/world/World.js`: terreno e biomas determinísticos.
 - `src/ui/` e `src/hud.css`: HUD e minimapa.
-- `src/data/Rig2D.js` e `src/data/WalkPoseData.js`: animações dos personagens.
+- `src/data/Rig2D.js` e `src/data/WalkPoseData.js`: referências antigas de animação preservadas.
 - `tests/`: testes de jogabilidade, desenho e dados de animação.
 
 Consulte `docs/ARCHITECTURE.md` para detalhes técnicos.
 
 ## Equilíbrio mais desafiador
 
-A dificuldade avança em **quatro fases** ao longo dos oito minutos:
+A ameaça da exploração avança em **quatro fases** conforme o tempo da expedição:
 - **0:00 — Calmaria:** grupos de um inimigo, com criaturas mais rápidas que na versão anterior.
 - **1:15 — Invasão:** grupos de dois inimigos, além dos encontros especiais já previstos.
 - **3:30 — Cerco:** grupos de três, monstros mais resistentes e mais próximos do jogador.
@@ -84,12 +92,10 @@ aumentou principalmente pela pressão crescente das hordas.
 
 ## Ouro e progresso entre partidas (roguelite)
 
-A cada derrota ou vitória, o jogador recebe **ouro virtual** calculado
+A cada expedição encerrada, o jogador recebe **ouro virtual** calculado
 principalmente pelo **nível alcançado**, além de inimigos derrotados e
-tempo de sobrevivência. Toda partida rende algum ouro, até uma tentativa
-curta. Sobreviver aos oito minutos acrescenta um bônus final. A estimativa
-do ouro aparece no HUD; a quantia efetivamente recebida e o saldo
-aparecem na tela de resultado.
+tempo explorado. Toda expedição rende algum ouro. A estimativa aparece no
+HUD; a quantia recebida e o saldo aparecem na tela de resultado.
 
 Abra **Melhorias permanentes · Loja** no menu ou **Gastar ouro · Ficar
 mais forte** após uma partida. Existem seis trilhas permanentes, com

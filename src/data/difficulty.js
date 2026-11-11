@@ -1,6 +1,6 @@
 /**
- * Horde pressure for the 8-minute survival challenge. Early defeats earn
- * permanent currency, so fresh accounts are expected to improve over runs.
+ * Horde pressure for open-ended exploration. The stages ramp threat over
+ * expedition time; they do not end the expedition on a fixed timer.
  * Common-enemy HP scales by level only (+5% compounded per level).
  * threat.health scales ONLY miniboss/main-boss HP over time.
  * Spawn quantity increases with both time and levelMilestones.js.

@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#090f1b">
-  <meta name="description" content="Crônicas do Éter — um RPG de sobrevivência com mundo e personagens desenhados por código.">
-  <title>Crônicas do Éter • Sobreviventes</title>
+  <meta name="description" content="Crônicas do Éter — exploração e sobrevivência em um mundo 3D procedural, com fortalezas, monstros e um herói que assume três formas.">
+  <title>Crônicas do Éter • Fronteiras</title>
   <link rel="stylesheet" href="./src/styles.css">
   <link rel="stylesheet" href="./src/hud.css">
 </head>
@@ -20,22 +20,7 @@
         <div class="hud-left-stack">
           <div class="hud-profile panel">
             <div class="avatar-icon" aria-hidden="true">
-              <svg class="portrait-art" viewBox="0 0 72 84" role="img" aria-label="Retrato ilustrado do Guerreiro">
-                <defs>
-                  <linearGradient id="avatar-back" x2="1" y2="1"><stop stop-color="#264d4b"/><stop offset="1" stop-color="#101e29"/></linearGradient>
-                  <linearGradient id="avatar-hair" x2="1" y2="1"><stop stop-color="#9a6642"/><stop offset="1" stop-color="#3c2523"/></linearGradient>
-                </defs>
-                <rect x="1" y="1" width="70" height="82" rx="9" fill="url(#avatar-back)" stroke="#b8a66a" stroke-width="1.5"/>
-                <path d="M4 83L12 63L26 59L36 65L48 59L61 64L69 83Z" fill="#516a71" stroke="#d4ba7c" stroke-width="1.8"/>
-                <path d="M25 59L36 65L47 58L42 83H30Z" fill="#b07952"/>
-                <path d="M16 28Q13 12 32 8Q51 2 59 18L57 43L47 54L25 53L17 42Z" fill="url(#avatar-hair)" stroke="#392425" stroke-width="2"/>
-                <path d="M24 28Q23 16 34 15Q48 14 50 28L49 43Q47 53 36 56Q25 54 23 42Z" fill="#e3b18c" stroke="#76543f" stroke-width="1"/>
-                <path d="M20 26L24 13L36 9L34 20L52 13L49 23L56 20L52 30L42 24L33 29L28 25L18 33Z" fill="url(#avatar-hair)"/>
-                <path d="M27 36L33 36M40 36L46 36" stroke="#392d2f" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="31" cy="37" r="1.4" fill="#77bbba"/><circle cx="43" cy="37" r="1.4" fill="#77bbba"/>
-                <path d="M36 38L35 44L38 45M32 49Q36 52 41 49" fill="none" stroke="#956d56" stroke-width="1.1"/>
-                <path d="M12 66L22 60L31 67L24 83H11ZM47 66L54 60L64 65L63 83H49Z" fill="#9f7254" stroke="#e1c292" stroke-width="1.3"/>
-              </svg>
+              <img id="hero-portrait" class="portrait-art" alt="">
               <span class="portrait-crest">✦</span>
             </div>
             <div class="hud-bars">
@@ -45,7 +30,7 @@
                 <div class="bar hp-bar" role="progressbar" aria-label="Pontos de vida" aria-valuemin="0"><div id="hp-fill"></div></div>
                 <strong id="hp-label">140 / 140</strong>
               </div>
-              <div class="hud-secondary"><span>⬡ ARMADURA <b id="armor-label">2</b></span><span>⚔ PODER <b id="might-label">100%</b></span></div>
+              <div class="hud-secondary"><span>⬡ ARM. <b id="armor-label">2</b></span><span>⚔ PODER <b id="might-label">100%</b></span><span>➤ MOV. <b id="top-speed">205</b></span></div>
             </div>
           </div>
           <div class="hud-auto-skills panel" aria-label="Habilidades usadas automaticamente">
@@ -56,12 +41,12 @@
         </div>
         <div class="hud-timer panel">
           <span class="timer-ornament" aria-hidden="true">❧</span>
-          <span class="micro-heading">⌛ TEMPO DE SOBREVIVÊNCIA</span>
+          <span class="micro-heading">⌛ TEMPO NA EXPEDIÇÃO</span>
           <strong id="time-label">00:00</strong>
           <span class="kill-count"><span aria-hidden="true">✹</span> <span id="kills-label">0</span> inimigos derrotados</span>
           <span id="threat-label" class="threat-label" data-stage="1">AMEAÇA I · CALMARIA</span>
         </div>
-        <div class="hud-actions">
+      <div class="hud-actions">
           <button id="sound-toggle" class="icon-button" aria-label="Ativar ou desativar som" title="Som">♫</button>
           <button id="pause-button" class="icon-button" aria-label="Pausar partida" title="Pausar (Esc)">Ⅱ</button>
         </div>
@@ -99,12 +84,17 @@
           <strong id="xp-label">0 / 38</strong>
         </div>
         <div class="hud-bottom-stats">
-          <span class="hud-stat"><i class="hud-stat-icon heart">♥</i> <b id="bottom-hp">140</b> <small>PV</small></span>
-          <span class="hud-stat"><i class="hud-stat-icon armor">⬡</i> <b id="bottom-armor">2</b> <small>ARM</small></span>
-          <span class="hud-stat"><i class="hud-stat-icon power">⚔</i> <b id="bottom-might">100%</b> <small>PODER</small></span>
-          <span class="hud-stat"><i class="hud-stat-icon movement">➤</i> <b id="bottom-speed">205</b> <small>MOV</small></span>
+          <span class="hud-stat sr-only"><b id="bottom-hp">140</b><small>PV</small></span>
+          <span class="hud-stat sr-only"><b id="bottom-armor">2</b><small>ARM</small></span>
+          <span class="hud-stat sr-only"><b id="bottom-might">100%</b><small>PODER</small></span>
+          <span class="hud-stat sr-only"><b id="bottom-speed">205</b><small>MOVIMENTO</small></span>
           <span class="hud-day" title="Ouro que ganhará ao terminar esta partida"><span aria-hidden="true">🪙</span> <b id="run-gold-preview">23</b> <small>OURO</small></span>
         </div>
+      </div>
+      <div class="world-resources panel" aria-label="Recursos carregados">
+        <span class="base-overview"><b id="base-name">Bosque do Santuário</b><small id="base-status">Fortaleza íntegra · pronta para defender</small><small id="base-goal">Preparando a próxima fronteira…</small></span>
+        <span>🪙 <b id="world-gold">0</b></span><span>🪵 <b id="world-wood">0</b></span><span>🪨 <b id="world-stone">0</b></span>
+        <span class="base-production" id="base-production">Produção: +0 madeira · +0 pedra/min</span>
       </div>
     </section>
 
@@ -113,24 +103,38 @@
         <div class="eyebrow"><span class="eyebrow-line"></span> RPG PROCEDURAL <span class="eyebrow-line"></span></div>
         <div class="menu-mark">✧</div>
         <h1>CRÔNICAS <em>DO</em><br><span>ÉTER</span></h1>
-        <p class="menu-subtitle">Em um mundo consumido pela névoa, cada segundo é uma batalha. Sobreviva, evolua e descubra sua lenda.</p>
-        <div class="feature-tags"><span>✧ Mundo infinito</span><span>✦ Arte por código</span><span>⚔ Combate automático</span></div>
-        <div class="record panel"><span class="micro-heading">MELHOR SOBREVIVÊNCIA</span><strong id="best-label">—</strong><small id="best-kills">Seu primeiro legado começa agora.</small></div>
+        <p class="menu-subtitle">Explore a fronteira, derrote monstros e reúna recursos. Erga fortalezas automatizadas para proteger o mapa e abrir caminho até novas regiões.</p>
+        <div class="feature-tags"><span>✧ Fronteira em expansão</span><span>♜ Fortalezas automatizadas</span><span>⚔ Combate automático</span></div>
+        <div class="record panel">
+          <span class="micro-heading">MELHOR TEMPO DE EXPEDIÇÃO</span>
+          <strong id="best-label">—</strong>
+          <small id="best-kills">Seu primeiro legado começa agora.</small>
+          <div class="record-stats" aria-label="Estatísticas da campanha">
+            <span><b id="menu-runs">0</b><small>PARTIDAS</small></span>
+            <span><b id="menu-kills">0</b><small>ABATES</small></span>
+            <span><b id="menu-level">1</b><small>NÍVEL MÁX.</small></span>
+          </div>
+        </div>
       </div>
       <div class="menu-card panel">
         <div class="mode-badge">MODO 01 <span>•</span> DISPONÍVEL</div>
-        <h2>Sobreviventes</h2>
-        <p>Escolha o seu herói. Resista a oito minutos de hordas e conquiste a vitória.</p>
-        <div class="section-label">ESCOLHA SUA CLASSE</div>
+        <h2>Exploração</h2>
+        <div class="hero-preview-stage"><canvas id="hero-preview" aria-label="Herói 3D"></canvas><span>UM HERÓI · TRÊS FORMAS</span></div>
+        <p>Escolha seu herói. Lute, farme ouro e materiais, construa defesas e avance quando estiver preparado.</p>
+        <div class="section-label">ESCOLHA A FORMA DO SEU HERÓI</div>
         <div class="class-list" id="class-list">
-          <button class="class-option active" data-class="guardian"><span class="class-symbol">⚔</span><span><strong>Guerreiro</strong><small>Espada • resistente</small></span><span class="class-radio"></span></button>
-          <button class="class-option" data-class="mage"><span class="class-symbol">✦</span><span><strong>Arcanista</strong><small>Magia • dano à distância</small></span><span class="class-radio"></span></button>
-          <button class="class-option" data-class="ranger"><span class="class-symbol">➶</span><span><strong>Andarilho</strong><small>Adagas • veloz</small></span><span class="class-radio"></span></button>
+          <button class="class-option active" data-class="guardian" aria-pressed="true"><span class="class-symbol">⚔</span><span><strong>Guerreiro</strong><small>Espada • resistente</small></span><span class="class-radio"></span></button>
+          <button class="class-option" data-class="mage" aria-pressed="false"><span class="class-symbol">✦</span><span><strong>Arcanista</strong><small>Magia • dano à distância</small></span><span class="class-radio"></span></button>
+          <button class="class-option" data-class="ranger" aria-pressed="false"><span class="class-symbol">➶</span><span><strong>Andarilho</strong><small>Adagas • veloz</small></span><span class="class-radio"></span></button>
+        </div>
+        <div class="class-readout" id="class-readout" aria-live="polite">
+          <div class="class-readout-head"><span>PERFIL INICIAL</span><strong id="class-readout-weapon">Lâmina solar</strong></div>
+          <div class="class-readout-stats"><span><b id="class-readout-hp">140</b> PV</span><span><b id="class-readout-armor">2</b> ARM</span><span><b id="class-readout-speed">205</b> MOV</span></div>
         </div>
         <div class="menu-wallet" aria-label="Moedas acumuladas"><span>🪙 OURO GUARDADO</span><strong id="menu-gold">0</strong></div>
-        <button id="start-button" class="primary-button">INICIAR AVENTURA <span>→</span></button>
+        <button id="start-button" class="primary-button">INICIAR EXPEDIÇÃO <span>→</span></button>
         <button type="button" id="open-shop" class="ghost-button shop-open-button">✦ MELHORIAS PERMANENTES · LOJA</button>
-        <p class="card-footnote">Personagens, inimigos, cenários e efeitos desenhados por código com Canvas 2D.</p>
+        <p class="card-footnote">WASD para mover, E para interagir. Explore para reunir recursos; trabalhadores produzem offline e as defesas enfrentam incursões enquanto você está em expedição.</p>
 
       </div>
       <div class="menu-footer">CRÔNICAS DO ÉTER <span>◆</span> MUNDO EM EXPANSÃO · v0.3</div>
@@ -183,6 +187,7 @@
         <button type="button" id="shop-close" class="ghost-button">← VOLTAR</button>
       </div>
     </section>
+      <button id="world-interact" class="world-interact" type="button" hidden></button>
     <div id="joystick" hidden><div id="joystick-knob"></div></div>
   </div>
   <script type="module" src="./src/main.js"></script>

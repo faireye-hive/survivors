@@ -2,7 +2,7 @@
 
 ## Fundamentos
 
-Frontend Vite + ES Modules, simulação JS, única renderização Canvas 2D e interface HTML/CSS. Sem 3D, sprites externos ou dependências gráficas pesadas. A página `index.html` é o único ponto de entrada do site.
+Frontend Vite + ES Modules, simulação JS no plano X/Y, renderização Three.js/WebGL2 e interface HTML/CSS. O renderizador converte as coordenadas lógicas para X/Z no mundo 3D com 50 unidades de gameplay por metro visual. `index.html` é o ponto de entrada da aplicação.
 
 ## Gameplay
 
@@ -10,25 +10,29 @@ Frontend Vite + ES Modules, simulação JS, única renderização Canvas 2D e in
 
 `Combat.js` calcula ataques automáticos, projéteis e morte de inimigos. Inimigos de elite soltam relíquias garantidas; `Progression.js` aplica +7% de dano e +15 PV (limitados a HP máximo). A progressão de nível continua oferecendo armas e melhorias existentes.
 
-`Renderer.js` desenha o mapa, as áreas perigosas no chão, os drops, personagens, projéteis e avisos passageiros. A ordem garante que ameaças no chão fiquem atrás dos inimigos e o aviso de onda apareça acima do jogo, sem bloquear os controles.
+`Renderer3D.js` sincroniza as entidades da simulação com modelos em uma cena 3D. A câmera em perspectiva acompanha o jogador, com zoom pela roda do mouse. Luz hemisférica, luz direcional com sombras e névoa criam profundidade. Projéteis, áreas perigosas, golpes, auras, recursos e portais possuem geometria 3D; números de combate são projetados numa camada de HUD sem capturar controles.
 
-## Arte dos personagens
+## Personagem e modelos 3D
 
-Guerreiro, Arcanista e Andarilho compartilham o mesmo estilo ilustrado Canvas 2D via `src/render/characters/RigRenderer.js`, sem um editor. O personagem é desenhado a partir dos atributos de aparência e poses do código. O renderizador evita adicionar braços ou pés humanoides em monstros que não os possuem.
+`src/render/three/Models.js` define um único corpo humanoide com pivôs comuns para pernas, braços e cabeça. Guerreiro, Arcanista e Andarilho usam esse mesmo corpo com equipamentos e materiais diferentes. Caminhada e ataque são aplicados aos pivôs em tempo real. `HeroPreview.js` apresenta a forma escolhida no menu e gera o retrato da HUD.
 
-`WildCreatures.js` implementa o Esporão e a Aranha com formas procedurais: chapéu/haste para fungos e oito patas para aranhas. `Art.js` seleciona entre os desenhos específicos e o renderizador compartilhado, sem fallback para o slime no caso desses dois monstros.
-
-`Rig2D.js` conserva o formato `cronicas-do-eter/rig2d` versão 1 e os padrões do jogo. As 100 poses de caminhada aprovadas do arquivo do usuário são geradas por `WalkPoseData.js` para as quatro direções. `WalkGuide.js` resolve a direção pelo movimento e seleciona a animação apropriada.
-
-Os dados previamente gravados em `cronicas.2d.rigs.v1` continuam legíveis para não perder alterações já feitas pelo usuário. O Rig Studio foi descontinuado e seus arquivos exclusivos retirados: desenvolvimento a partir de agora é focado no jogo.
+Cada espécie de monstro possui anatomia própria. As partes rígidas de cada articulação são fundidas em uma malha com cores por vértice; membros móveis mantêm seus pivôs. Geometrias e materiais de base são compartilhados. Malhas geradas e materiais de texto são descartados ao remover entidades.
 
 ## Mundo e apresentação
 
-`World.js` constrói terrenos determinísticos com biomas e objetos desenhados em Canvas. `HudData.js` fornece ao HUD pontos reais de vida, arma, XP e posições do minimapa. Elites e relíquias têm identificação visual distinta. Efeitos e banners são temporários; não interrompem a partida.
+`World.js` continua sendo a fonte determinística de biomas. `Environment.js` materializa terreno e vegetação com `InstancedMesh`, reconstruindo a região visível ao atravessar blocos do mundo. Fortalezas refletem edifícios, níveis, trabalhadores, integridade e obras do save. Terreno e câmera usam os mesmos eixos da simulação para preservar a orientação de WASD e do minimapa.
+
+`HudData.js` fornece valores reais de vida, arma, XP e minimapa. A HUD permanece HTML/CSS e Canvas 2D para o minimapa. Os módulos antigos `Art.js`, `Renderer.js`, `RigRenderer.js` e dados de poses 2D são referências históricas, sem uso na renderização da partida. Saves antigos de poses permanecem intactos.
+
+## Campanha, fortificações e produção idle
+
+`Campaign.js` conserva o save `cronicas_eter_campaign_v1` e normaliza campos novos de integridade sem apagar regiões, materiais, trabalhadores ou edifícios antigos. `idleProduction` calcula a produção por ciclos de 15 segundos e limita o tempo offline a 24 horas; fortalezas violadas não produzem até serem reparadas. `campaignSummary` fornece região atual, taxas de produção, integridade e custos da próxima fronteira ao HUD.
+
+As obras avançam durante uma expedição ativa, sem exigir que o herói fique no canteiro. A cada 55 segundos de jogo, `raidFortress` resolve uma incursão na fortaleza atual: torres e sentinelas reduzem a força do ataque e muralhas absorvem dano. O núcleo permite reparar 20 pontos por 5 madeira e 5 pedra. O relógio das incursões reinicia no início da expedição, portanto ataques não avançam offline.
 
 ## Validação
 
-`npm test` executa verificações do gameplay, encontros, renderização 2D, upgrades, movimento, anatomia dos personagens e dados de caminhada. `npm run build` gera o site estático em `dist/`. O workflow do GitHub publica esse artefato no GitHub Pages.
+`npm test` executa verificações do gameplay, encontros, geometria 3D, personagem compartilhado, ciclo de entidades, upgrades, movimento, anatomia dos personagens e dados de caminhada. `npm run build` gera o site estático em `dist/`. O workflow do GitHub publica esse artefato no GitHub Pages.
 
 ## Fases de dificuldade e comunicação visual
 
@@ -41,7 +45,7 @@ prevenindo extrapolação após a vitória. As fases começam em 0, 75,
 dificuldade e limites de população. O cap existente continua 170.
 
 O Guardião da Névoa conta com investidas: antes de acelerar, ele fica
-parado durante 0,7 segundo enquanto `Art.js` desenha um círculo
+parado durante 0,7 segundo enquanto `Renderer3D.js` desenha um círculo
 telegráfico dourado; a investida dura 0,72 segundo. Esse comportamento
 é exclusivo dos chefes, sem modificar colisões de ataque básicas.
 
@@ -141,3 +145,9 @@ até o piso de 0,34s e aproxima um pouco o círculo de surgimento.
 redor do jogador para evitar que o grupo inteiro apareça apenas de um
 lado. `MAX_ENEMIES=170` continua prevenindo excesso de atores.
 Os encontros e marcos de miniboss/chefe por nível continuam funcionando.
+
+## Proteção do perímetro
+
+`FortressBounds.js` centraliza o perímetro lógico das bases (300 × 165 unidades de meia extensão, espaçadas por 1800 unidades). A palissada 3D usa esses mesmos limites. Surgimentos e movimento projetam o corpo inteiro do inimigo para fora do retângulo expandido pelo seu raio. Uma interseção contínua segmento/retângulo impede atravessar a base em investidas rápidas. A abertura visual permanece transitável apenas para o jogador.
+
+Projéteis hostis expiram ao interceptar o perímetro. Esporões não criam áreas sobre um herói protegido; áreas antigas internas são removidas e piscinas externas não causam dano para dentro. A proteção vale em todas as fortalezas conquistadas, independentemente do nível das melhorias. Incursões e integridade dos edifícios continuam sendo resolvidas pelo sistema de campanha.

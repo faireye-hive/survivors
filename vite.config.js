@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
-// Single lightweight Canvas 2D gameplay entry point; no editor build.
+// One 3D gameplay entry point; preview fixtures stay outside the production build.
 export default defineConfig({
   base: './',
   server: { host: '0.0.0.0', port: 3000 },

@@ -3,9 +3,26 @@
  * No editor, imported sprites, 3D models, or extra dependencies.
  */
 const TAU=Math.PI*2;
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+function tint(color,amount){
+  const match=/^#([\da-f]{6})$/i.exec(color||'');
+  if(!match)return color;
+  const value=Number.parseInt(match[1],16);
+  return '#'+[value>>16,(value>>8)&255,value&255]
+    .map(channel=>Math.round(clamp(amount>=0?channel+(255-channel)*amount:channel*(1+amount),0,255))
+      .toString(16).padStart(2,'0')).join('');
+}
+function surface(c,color,x,y,rx,ry){
+  if(rx<7||ry<8||!/^#[\da-f]{6}$/i.test(color||'')||!c.createLinearGradient)return color;
+  const g=c.createLinearGradient(x-rx*.7,y-ry,x+rx*.7,y+ry);
+  if(!g?.addColorStop)return color;
+  g.addColorStop(0,tint(color,.3));g.addColorStop(.36,tint(color,.08));
+  g.addColorStop(.75,color);g.addColorStop(1,tint(color,-.34));
+  return g;
+}
 function ell(c,x,y,rx,ry,color,stroke='#1b2931',lineWidth=1.8){
   c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);
-  c.fillStyle=color;c.fill();
+  c.fillStyle=surface(c,color,x,y,rx,ry);c.fill();
   if(stroke){c.lineWidth=lineWidth;c.strokeStyle=stroke;c.stroke();}
 }
 function line(c,points,color,width=2){
@@ -50,7 +67,7 @@ function spore(c,e,t){
   c.bezierCurveTo(-21,-40+bounce,-8,-47+bounce,0,-46+bounce);
   c.bezierCurveTo(9,-47+bounce,24,-36+bounce,22,-18+bounce);
   c.quadraticCurveTo(0,-13+bounce,-21,-17+bounce);
-  c.fillStyle=base;c.fill();c.strokeStyle='#29382d';c.lineWidth=2;c.stroke();
+  c.fillStyle=surface(c,base,0,-32,22,15);c.fill();c.strokeStyle='#29382d';c.lineWidth=2;c.stroke();
   ell(c,-7,-32+bounce,4,3.1,'#e3d3a4',null);
   ell(c,6,-37+bounce,5,3.5,'#f0dfbc',null);
   ell(c,12,-24+bounce,3,2.5,'#ecdab1',null);

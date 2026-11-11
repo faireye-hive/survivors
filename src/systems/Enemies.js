@@ -3,6 +3,7 @@ import {ENCOUNTERS,chooseEncounterType} from '../data/encounters.js';
 import { distanceSquared } from '../core/math.js';
 import {threatAt} from '../data/difficulty.js';
 import {milestoneForLevel,miniBossType,enemyLevelScaling,levelHordePressure} from '../data/levelMilestones.js';
+import {insideFortress,crossesFortress,excludeEnemyFromFortresses} from '../world/FortressBounds.js';
 
 const MAX_ENEMIES=170;
 const MAX_HAZARDS=24;
@@ -56,6 +57,7 @@ export function spawnEnemy(g,type=randomEnemyType(g.elapsed),options={}){
     rushVx:0,rushVy:0,
     novaCooldown:2.3,novaWarmup:0,novaAngle:0
   };
+  excludeEnemyFromFortresses(g,enemy);
   g.enemies.push(enemy);
   return enemy;
 }
@@ -151,7 +153,9 @@ export function updateEnemyShots(g,dt){
   g.enemyShots??=[];
   const p=g.player;
   for(const shot of g.enemyShots){
+    const from={x:shot.x,y:shot.y};
     shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;shot.life-=dt;
+    if(crossesFortress(g,from,shot,shot.radius||0)){shot.life=0;continue;}
     if(shot.life<=0||p.inv>0)continue;
     if(distanceSquared(shot,p)>(shot.radius+p.radius*.65)**2)continue;
     shot.life=0;
@@ -166,11 +170,12 @@ export function updateEnemyShots(g,dt){
 
 export function updateHazards(g,dt){
   g.hazards??=[];
-  const p=g.player;
+  const p=g.player,protectedPlayer=insideFortress(g,p);
   for(const h of g.hazards){
     h.life-=dt;
     h.warmup-=dt;
-    if(h.life<=0||h.warmup>0||p.inv>0)continue;
+    if(insideFortress(g,h)){h.life=0;continue;}
+    if(h.life<=0||h.warmup>0||p.inv>0||protectedPlayer)continue;
     // Collision matches the elliptical warning drawn on the ground.
     const rx=h.radius+p.radius*.35,ry=h.radius*.65+p.radius*.35;
     if(((p.x-h.x)/rx)**2+((p.y-h.y)/ry)**2<1){
@@ -204,9 +209,10 @@ export function updateEnemies(g,dt){
   triggerEncounters(g);
   // Bosses are now triggered by levels 5, 10, 15, ... — not timers.
 
-  const p=g.player;
+  const p=g.player,protectedPlayer=insideFortress(g,p);
   for(const e of g.enemies){
     if(e.hp<=0)continue;
+    excludeEnemyFromFortresses(g,e);
     const dx=p.x-e.x,dy=p.y-e.y,dist=Math.hypot(dx,dy)||1;
     const forward=dist>0?e.speed/dist:0;
     const orbit=e.type==='spider'
@@ -245,11 +251,13 @@ export function updateEnemies(g,dt){
         }
       }
     }
+    const previous={x:e.x,y:e.y};
     e.x+=e.vx*dt;e.y+=e.vy*dt;
+    excludeEnemyFromFortresses(g,e,previous);
 
     if(e.type==='spore'){
       e.sporeTimer-=dt;
-      if(e.sporeTimer<=0&&dist<290&&(g.hazards?.length||0)<MAX_HAZARDS){
+      if(e.sporeTimer<=0&&dist<290&&!protectedPlayer&&(g.hazards?.length||0)<MAX_HAZARDS){
         g.hazards??=[];
         g.hazards.push({
           x:p.x,y:p.y,radius:e.elite?69:55,
@@ -259,7 +267,7 @@ export function updateEnemies(g,dt){
       }
     }
     if(e.hit>0)e.hit=Math.max(0,e.hit-dt);
-    if(dist<(e.radius+p.radius)*.8&&p.inv<=0){
+    if(!protectedPlayer&&Math.hypot(e.x-p.x,e.y-p.y)<(e.radius+p.radius)*.8&&p.inv<=0){
       const damage=Math.max(1,e.damage-p.armor);
       p.hp=Math.max(0,p.hp-damage);p.inv=.7;
       g.addText('-'+damage,p.x,p.y-55,'#ff8a9b');
