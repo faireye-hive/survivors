@@ -1,10 +1,26 @@
 import { WEAPONS } from '../data/weapons.js';
 import { distanceSquared, normalize } from '../core/math.js';
+import {creditGold} from '../storage/Profile.js';
 function nearest(g,radius=720){
   let result=null,best=radius*radius;
   for(const e of g.enemies)if(e.hp>0){
     const d=distanceSquared(e,g.player);if(d<best){best=d;result=e;}
   }return result;
+}
+export function defeatEnemy(g,e){
+  if(e.rewarded)return;e.rewarded=true;
+  g.kills++;g.drops.push({x:e.x,y:e.y,kind:'xp',value:e.xp,life:80});
+  const reward=e.boss?35:e.miniBoss?18:e.elite?7:3;
+  creditGold(reward);g.addText('🪙 +'+reward,e.x,e.y-e.radius*2-12,'#ffe3a1');
+  if(Math.random()<((e.elite||e.boss||e.miniBoss)?0.55:0.22))
+    g.drops.push({x:e.x+10,y:e.y+8,kind:Math.random()<.58?'wood':'stone',value:e.elite||e.boss?3:1,life:72});
+  if(e.elite||e.miniBoss||e.boss)g.drops.push({x:e.x+12,y:e.y-8,kind:'relic',value:1,life:90});
+  if(e.bountyGold>0){
+    g.bonusGold=(g.bonusGold||0)+e.bountyGold;
+    g.addText('🪙 +'+e.bountyGold+' OURO',e.x,e.y-85,'#ffe3a1');
+  }
+  if(Math.random()<.028)g.drops.push({x:e.x+14,y:e.y,kind:'heal',value:20,life:65});
+  g.burst(e.x,e.y,'#bceab5',8);
 }
 function hurt(g,e,damage){
   if(e.hp<=0)return;
@@ -12,21 +28,11 @@ function hurt(g,e,damage){
   e.hp-=amount;e.hit=.12;
   if(g.floatTexts.length<50)g.addText(''+amount,e.x,e.y-e.radius*2,'#f9d998');
   g.burst(e.x,e.y,e.boss?'#ebc780':'#a5e2c5',3);
-  if(e.hp<=0){
-    g.kills++;g.drops.push({x:e.x,y:e.y,kind:'xp',value:e.xp,life:80});
-    if(e.elite||e.miniBoss||e.boss)
-      g.drops.push({x:e.x+12,y:e.y-8,kind:'relic',value:1,life:90});
-    if(e.bountyGold>0){
-      // One bonus per milestone kill, awarded even if the XP/relic is missed.
-      g.bonusGold=(g.bonusGold||0)+e.bountyGold;
-      g.addText('🪙 +'+e.bountyGold+' OURO',e.x,e.y-85,'#ffe3a1');
-    }
-    if(Math.random()<.028)g.drops.push({x:e.x+14,y:e.y,kind:'heal',value:20,life:65});
-    g.burst(e.x,e.y,'#bceab5',8);
-  }
+  if(e.hp<=0)defeatEnemy(g,e);
 }
 function shoot(g,kind,level,target){
   const p=g.player,aim=normalize(target.x-p.x,target.y-p.y);
+  p.facing=Math.atan2(aim.y,aim.x);
   const count=kind==='dagger'&&level>=3?2:1;
   for(let i=0;i<count;i++){
     const angle=Math.atan2(aim.y,aim.x)+(count===2?(i===0?-.12:.12):0);
@@ -39,6 +45,7 @@ function shoot(g,kind,level,target){
 }
 function fire(g,w){
   const p=g.player,lv=w.level;
+  p.attackPose=.27;
   if(w.id==='blade'){
     const target=nearest(g,240),angle=target?Math.atan2(target.y-p.y,target.x-p.x):p.facing;
     p.facing=angle;

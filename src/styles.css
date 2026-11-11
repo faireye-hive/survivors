@@ -258,6 +258,33 @@ h1 span{color:#e5bf74}
 .upgrade-option[data-theme="defense"] .upgrade-kind{color:#c2e1ff}
 .upgrade-option[data-theme="utility"] .upgrade-kind{color:#bcebd2}
 .upgrade-option:focus-visible{outline:2px solid var(--upgrade-accent);outline-offset:2px}
+
+/* Give class selection and campaign records the same visual weight as the launch action. */
+.class-readout{
+  --class-accent:#dcb573;
+  margin:-11px 0 14px;padding:10px 12px;
+  border:1px solid color-mix(in srgb,var(--class-accent) 45%,#294049);
+  border-radius:8px;
+  background:linear-gradient(105deg,color-mix(in srgb,var(--class-accent) 10%,#11222d),#101c29);
+  box-shadow:inset 3px 0 color-mix(in srgb,var(--class-accent) 80%,transparent);
+}
+.class-readout-head,.class-readout-stats{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.class-readout-head span{color:#91aaa9;font-size:9px;font-weight:900;letter-spacing:.12em}
+.class-readout-head strong{color:var(--class-accent);font-size:11px}
+.class-readout-stats{justify-content:flex-start;gap:7px;margin-top:8px}
+.class-readout-stats span{padding:4px 7px;border:1px solid #52626966;border-radius:5px;color:#a9bcbb;font-size:9px;font-weight:800;letter-spacing:.04em}
+.class-readout-stats b{color:#f1e6cb;font-variant-numeric:tabular-nums}
+.class-option:focus-visible{outline:2px solid #bce8d1;outline-offset:2px}
+.record-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid #55707050}
+.record-stats>span{display:flex;flex-direction:column;gap:3px}
+.record-stats b{color:#f1e1be;font-size:16px;font-variant-numeric:tabular-nums}
+.record-stats small{color:#819d9f;font-size:8px;font-weight:850;letter-spacing:.08em}
+@media(max-width:680px){
+  .class-readout{margin:-7px 0 10px;padding:8px 10px}
+  .class-readout-stats{margin-top:6px}
+  .record-stats{margin-top:7px;padding-top:7px}
+  .record-stats b{font-size:13px}
+}
 .meta-upgrade-card[data-theme="attack"]{
  border-color:#ac665a;background:linear-gradient(145deg,#3e2b2a,#212730);
 }
@@ -304,3 +331,17 @@ h1 span{color:#e5bf74}
  .survivor-hud .boss-health-track{margin-top:5px;height:8px}
  .survivor-hud .boss-health-numbers{font-size:8px}
 }
+
+.hero-preview-stage{position:relative;height:190px;margin:-6px 0 13px;border:1px solid #6a9d8940;border-radius:11px;background:radial-gradient(ellipse at 50% 75%,#3b746b60,transparent 66%);overflow:hidden}
+#hero-preview{display:block;width:100%;height:100%}
+.hero-preview-stage>span{position:absolute;bottom:8px;left:0;right:0;color:#a9ceba;text-align:center;font-size:8px;font-weight:800;letter-spacing:.18em;pointer-events:none}
+.menu-card{max-height:calc(100dvh - 50px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#557867 #122530}
+.menu-card .class-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:20px}
+.menu-card .class-option{display:flex;flex-direction:column;gap:7px;padding:10px 5px;text-align:center}
+.menu-card .class-symbol{width:30px;height:30px;font-size:20px}
+.menu-card .class-option strong{font-size:11px}
+.menu-card .class-option small,.menu-card .class-radio{display:none}
+.menu-card h2{margin-top:6px}
+.menu-card>p:not(.card-footnote){font-size:12px;line-height:1.5;margin-bottom:14px}
+@media(max-height:760px){.hero-preview-stage{height:145px}.menu-card{padding-top:20px;padding-bottom:18px}.menu-card .class-option{padding:7px 4px;gap:3px}}
+@media(max-width:680px){.menu-card{max-height:none;overflow:visible}.hero-preview-stage{height:175px}.menu-card .class-option strong{font-size:11px}.menu-card .class-option{padding:8px 4px}}

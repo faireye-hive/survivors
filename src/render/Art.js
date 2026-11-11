@@ -73,6 +73,11 @@ export function drawDrop(c,d,x,y,t){
     polygon(c,points,'#f1c67e');
     polygon(c,points.map(([px,py])=>[px*.57,py*.62-3.5]),'#fff3c6');
     circle(c,-2,-13,2,'#ffffff');
+  }else if(d.kind==='wood'){
+    c.rotate(-.35);c.fillStyle='#76543c';c.fillRect(-10,-11,20,7);c.fillStyle='#b88955';c.fillRect(-8,-14,16,4);c.fillStyle='#d2a66c';c.beginPath();c.ellipse(10,-7,3.2,4,0,0,Math.PI*2);c.fill();
+  }else if(d.kind==='stone'){
+    polygon(c,[[-12,-5],[-8,-15],[2,-18],[13,-11],[10,-3],[0,1]],'#778a87');
+    polygon(c,[[-8,-15],[2,-18],[0,-9],[-11,-7]],'#c0cfbd');
   }else{
     c.scale(d.value>30?1.3:1,d.value>30?1.3:1);
     polygon(c,[[0,-19],[8,-8],[5,4],[-5,4],[-8,-8]],'#47bccc');
@@ -98,6 +103,9 @@ export function drawEffect(c,fx,x,y){
   }else if(fx.kind==='aura'){
     c.strokeStyle='#8affdb';c.lineWidth=6*f;c.beginPath();c.arc(0,0,fx.radius*(1.25-f*.25),0,PI2);c.stroke();
     c.strokeStyle='#d4c5f9';c.lineWidth=2*f;c.beginPath();c.arc(0,0,fx.radius*.7,0,PI2);c.stroke();
+  }else if(fx.kind==='bolt'){
+    c.fillStyle='#f4dd8b';c.beginPath();c.arc(0,0,fx.radius*(.55+f*.4),0,PI2);c.fill();
+    c.strokeStyle='#fff6c7';c.lineWidth=2*f;c.beginPath();c.arc(0,0,fx.radius,0,PI2);c.stroke();
   }c.restore();
 }
 

@@ -7,6 +7,24 @@ const project=readRigProject();
 const definitions=new Map(project.characters.map(item=>[item.id,item]));
 for(const id of RIG_IDS)if(!definitions.has(id))definitions.set(id,newCharacter(id));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+function shifted(color,amount){
+  const match=/^#([\da-f]{6})$/i.exec(color||'');
+  if(!match)return color;
+  const value=Number.parseInt(match[1],16);
+  const channels=[value>>16,(value>>8)&255,value&255]
+    .map(channel=>Math.round(clamp(amount>=0?channel+(255-channel)*amount:channel*(1+amount),0,255)));
+  return '#'+channels.map(channel=>channel.toString(16).padStart(2,'0')).join('');
+}
+function volumePaint(c,color,x1,y1,x2,y2){
+  if(!/^#[\da-f]{6}$/i.test(color||'')||!c.createLinearGradient)return color;
+  const gradient=c.createLinearGradient(x1,y1,x2,y2);
+  if(!gradient?.addColorStop)return color;
+  gradient.addColorStop(0,shifted(color,.32));
+  gradient.addColorStop(.34,shifted(color,.1));
+  gradient.addColorStop(.72,color);
+  gradient.addColorStop(1,shifted(color,-.36));
+  return gradient;
+}
 
 /** Calculate the same nested joint positions used by rendering and picking. */
 export function getRigHandles(pose={},characterOrTemplate='hero.guardian'){
@@ -31,13 +49,26 @@ export function getRigHandles(pose={},characterOrTemplate='hero.guardian'){
 }
 function ell(c,x,y,rx,ry,fill,stroke=null,width=1){
   c.beginPath();c.ellipse(x,y,Math.max(.01,rx),Math.max(.01,ry),0,0,TAU);
-  if(fill){c.fillStyle=fill;c.fill();}
+  if(fill){
+    c.fillStyle=rx>=10&&ry>=10
+      ?volumePaint(c,fill,x-rx*.72,y-ry,x+rx*.72,y+ry)
+      :fill;
+    c.fill();
+  }
   if(stroke){c.lineWidth=width;c.strokeStyle=stroke;c.stroke();}
 }
 function path(c,points,fill,stroke=null,width=1){
   c.beginPath();c.moveTo(...points[0]);
   for(const p of points.slice(1))c.lineTo(...p);
-  c.closePath();if(fill){c.fillStyle=fill;c.fill();}
+  c.closePath();
+  if(fill){
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+    const left=Math.min(...xs),right=Math.max(...xs),top=Math.min(...ys),bottom=Math.max(...ys);
+    c.fillStyle=right-left>20&&bottom-top>20
+      ?volumePaint(c,fill,left,top,right,bottom)
+      :fill;
+    c.fill();
+  }
   if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}
 }
 function stroke(c,points,color,width){
@@ -76,6 +107,20 @@ function body(c,shape,pal){
     path(c,[[-11,-10],[0,-4],[11,-10],[9,13],[0,17],[-9,13]],S,A,1.5);
     ell(c,0,0,4,5,A,O,.8);
     stroke(c,[[-11,7],[11,7]],A,2);
+    if(shape==='guardian'){
+      ell(c,-11,-10,6,7,S,O,1.5);ell(c,11,-10,6,7,S,O,1.5);
+      path(c,[[-4,-8],[0,-12],[4,-8],[3,-2],[0,1],[-3,-2]],A,O,1);
+      stroke(c,[[-9,12],[9,12]],'#dbe0d6',1.2);
+    }else if(shape==='mage'){
+      path(c,[[-8,1],[0,-2],[8,1],[5,13],[0,16],[-5,13]],'#425996',null);
+      ell(c,0,-1,3.2,4.2,A,'#d7f8ff',1);
+      stroke(c,[[-3,8],[0,11],[3,8]],'#e0ca8d',1.2);
+    }else if(shape==='ranger'){
+      path(c,[[-13,-1],[13,3],[12,8],[-13,4]],'#806344',O,1);
+      ell(c,0,5,3,3,A,O,1);
+      stroke(c,[[-8,-12],[7,13]],'#d9c68f',1.4);
+      stroke(c,[[-9,13],[8,13]],'#dfcc98',1.2);
+    }
   }
 }
 function limb(c,shape,pal,side,leg){
@@ -149,14 +194,20 @@ function head(c,shape,pal,back){
     path(c,[[-4,-18],[0,-23],[4,-18],[2,-10],[-2,-10]],A,O,1.5);
     path(c,[[-13,-2],[-11,10],[-7,11],[-7,-2]],S,O,1.3);
     path(c,[[13,-2],[11,10],[7,11],[7,-2]],S,O,1.3);
+    path(c,[[-7,-7],[0,-12],[7,-7],[5,-2],[-5,-2]],A,O,1);
+    ell(c,0,-7,2.1,2.6,'#f8e6a6',null);
   }else if(shape==='mage'){
     path(c,[[-15,8],[-18,-5],[-10,-18],[0,-23],[11,-18],[18,-5],[15,8],[10,2],[8,-8],[-8,-8],[-10,2]],
       P,O,2.1);
     path(c,[[-10,-11],[0,-21],[10,-11]],null,A,1);
+    ell(c,0,-7,3,4,'#b9f2f4','#426b91',1);
+    ell(c,-1,-8,1,1.4,'#fff5c8',null);
   }else{
     path(c,[[-15,9],[-17,-5],[-7,-18],[4,-20],[15,-11],[16,9],[10,1],[9,-9],[-10,-9],[-10,3]],
       S,O,2);
     path(c,[[-9,-10],[4,-14],[10,-7],[-4,-5]],P,null);
+    path(c,[[-10,3],[0,1],[10,3],[8,8],[-8,8]],S,O,.8);
+    stroke(c,[[-12,-3],[12,-3]],A,1.1);
   }
   if(back){
     ell(c,0,3,9,7,S);
@@ -223,7 +274,17 @@ export function drawRigActor(c,actor,x,y,time=0,options={}){
   const flipped=face==='left'||(face!=='right'&&(actor?.vx||0)<-8);
   const scale=(options.scale??1)*(shape==='colossus'?1.65:1);
   c.save();c.translate(x,y);c.scale(flipped?-scale:scale,scale);
-  if(options.shadow!==false)ell(c,0,4,shape==='colossus'?32:19,6,'#07151b77');
+  if(options.shadow!==false){
+    const rx=shape==='colossus'?32:19,ry=shape==='colossus'?9:6;
+    if(c.createRadialGradient){
+      const shadow=c.createRadialGradient(4,7,1,4,7,rx+7);
+      if(shadow?.addColorStop){
+      shadow.addColorStop(0,'#04100fc4');shadow.addColorStop(.58,'#07151b77');
+      shadow.addColorStop(1,'#07151b00');
+      c.fillStyle=shadow;c.beginPath();c.ellipse(4,7,rx+7,ry+5,0,0,TAU);c.fill();
+      }else ell(c,0,4,rx,ry,'#07151b77');
+    }else ell(c,0,4,rx,ry,'#07151b77');
+  }
   if(actor?.inv>0)c.globalAlpha*=.68+.18*Math.cos(time*24);
   if(actor?.hit>0)c.globalAlpha*=.83;
   // Draw only bones that belong to this species. Slimes have ONE jelly

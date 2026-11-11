@@ -27,6 +27,18 @@ function persist(profile){
     return true;
   }catch{return false;}
 }
+/** Persist combat rewards immediately so a defeat never deletes farmed gold. */
+export function creditGold(amount){
+  const p=getProfile(),value=safeInt(amount,1000000);
+  p.gold=Math.min(GOLD_CAP,p.gold+value);
+  p.lifetimeGold=Math.min(GOLD_CAP,p.lifetimeGold+value);
+  persist(p);return p;
+}
+export function spendGold(amount){
+  const p=getProfile(),cost=safeInt(amount,1_000_000);
+  if(p.gold<cost)return {ok:false,profile:p};
+  p.gold-=cost;persist(p);return {ok:true,profile:p};
+}
 /**
  * Gold increases steeply with level reached and also rewards kills/time.
  * Even an early defeat yields gold. The victory bonus is optional.

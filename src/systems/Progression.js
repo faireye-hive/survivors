@@ -2,6 +2,7 @@ import { distanceSquared } from '../core/math.js';
 import { STAT_UPGRADES } from '../data/upgrades.js';
 import { WEAPONS } from '../data/weapons.js';
 import {spawnLevelMilestone,rescaleCommonEnemies} from './Enemies.js';
+import {gatherMaterials} from '../storage/Campaign.js';
 export function xpForLevel(lv){return Math.round(24+lv*12+lv*lv*2);}
 export function createChoices(g){
   const pool=[];
@@ -64,6 +65,9 @@ export function updateProgression(g,dt){
         p.hp=Math.min(p.maxHp,p.hp+15);
         g.addText('✦ RELÍQUIA · +7% DANO',p.x,p.y-65,'#f9da8d');
         g.burst(p.x,p.y,'#f9d18a',12);
+      }else if(d.kind==='wood'||d.kind==='stone'){
+        g.campaign=gatherMaterials(d.kind==='wood'?d.value:0,d.kind==='stone'?d.value:0);
+        g.addText(d.kind==='wood'?'+ MADEIRA':'+ PEDRA',p.x,p.y-53,d.kind==='wood'?'#a8e7a2':'#c8d6dd');
       }else p.xp+=Math.round(d.value*(p.experienceGain||1));
       d.life=0;collected=true;
     }

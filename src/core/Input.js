@@ -5,6 +5,7 @@ export class Input {
     this.canvas = canvas;
     this.onPause = onPause;
     this.held = new Set();
+    this.pressed = new Set();
     this.touchId = null;
     this.touchStart = { x: 0, y: 0 };
     this.touchMove = { x: 0, y: 0 };
@@ -14,6 +15,7 @@ export class Input {
       const keys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'];
       if (keys.includes(e.code) && (e.target === document.body || e.target === canvas)) e.preventDefault();
       if ((e.code === 'Escape' || e.code === 'KeyP') && !e.repeat) onPause();
+      if(!e.repeat&&!this.held.has(e.code))this.pressed.add(e.code);
       this.held.add(e.code);
     };
     this.up = (e) => { this.held.delete(e.code); };
@@ -57,8 +59,9 @@ export class Input {
     if (!x && !y) return this.touchMove;
     return normalize(x, y);
   }
+  consumeKey(code){const pressed=this.pressed.has(code);this.pressed.delete(code);return pressed;}
   reset() {
-    this.held.clear(); this.touchId = null; this.touchMove = { x: 0, y: 0 }; this.joystick.hidden = true;
+    this.held.clear();this.pressed.clear(); this.touchId = null; this.touchMove = { x: 0, y: 0 }; this.joystick.hidden = true;
   }
   destroy() {
     window.removeEventListener('keydown', this.down);
