@@ -188,13 +188,13 @@ export function createFortress(index,fort,label){
     root.userData.constructionAssets.push(makeWallRun(root,halfDepth-.88,halfWidth,(halfDepth+.88)/2,Math.PI/2,p));
   }
   archGate(root,halfWidth,0,Math.PI/2);
-  // The shelter is the visual heart of every settlement, built in six real mesh stages.
-  cottage(root,0,-.1,'house',1);
   root.userData.constructionAssets??=[];
   for(const [key,pos] of Object.entries(SITE_POSITIONS)){
     const x=pos.x/UNIT,z=pos.y/UNIT,level=fort.buildings[key]||0,project=fort.project?.type===key;
     const progress=level?1:project?Math.min(1,fort.project.progress/fort.project.required):0;
-    if(key==='tower'){
+    if(key==='house'){
+      if(level||project){const asset=cottage(root,x,z,'house',progress);if(project)root.userData.constructionAssets.push(asset);}
+    }else if(key==='tower'){
       if(level||project){for(const [tx,tz] of [[-halfWidth,-halfDepth],[halfWidth,-halfDepth],[-halfWidth,halfDepth],[halfWidth,halfDepth]]){const asset=octagonalTower(root,tx,tz,level||1,progress);if(project)root.userData.constructionAssets.push(asset);}}
     }else if(key==='lumber'){
       if(level||project){const asset=cottage(root,x,z,'storage',progress);if(project)root.userData.constructionAssets.push(asset);}

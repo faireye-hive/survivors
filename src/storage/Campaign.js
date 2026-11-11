@@ -10,13 +10,14 @@ export const REGIONS=[
   {name:'Coroa do Eclipse',cost:1500,wood:110,stone:100}
 ];
 export const SITE_DEFS={
+  house:{name:'Abrigo do personagem',icon:'⌂',wood:22,stone:10,seconds:9},
   tower:{name:'Torre de vigia',icon:'⌖',wood:18,stone:8,seconds:7,defense:true},
   lumber:{name:'Depósito de recursos',icon:'▰',wood:24,stone:5,seconds:9},
   quarry:{name:'Oficina de produção',icon:'⚒',wood:14,stone:12,seconds:10},
   wall:{name:'Muralha',icon:'▤',wood:30,stone:20,seconds:12,defense:true}
 };
 export const SITE_POSITIONS={
-  tower:{x:-285,y:-145},lumber:{x:132,y:-76},quarry:{x:-132,y:82},wall:{x:132,y:82}
+  house:{x:-55,y:-30},tower:{x:-285,y:-145},lumber:{x:132,y:-76},quarry:{x:-132,y:82},wall:{x:132,y:82}
 };
 export const WORKERS={
   lumberjack:{name:'Lenhador',icon:'🪓',gold:70,x:-90},
@@ -26,7 +27,7 @@ export const WORKERS={
 export const WORKER_Y=118;
 export const IDLE_TICK_MS=15000;
 export const MAX_OFFLINE_MS=24*60*60*1000;
-const blankFort=()=>({buildings:{tower:1,lumber:0,quarry:0,wall:0},workers:[],project:null,integrity:100,maxIntegrity:100,lastRaid:null});
+const blankFort=()=>({buildings:{house:0,tower:1,lumber:0,quarry:0,wall:0},workers:[],project:null,integrity:100,maxIntegrity:100,lastRaid:null});
 const fresh=()=>({region:0,wood:30,stone:18,fortresses:[blankFort()],lastProductionAt:Date.now()});
 function normalize(raw){
   const c={...fresh(),...raw};
@@ -34,7 +35,7 @@ function normalize(raw){
   c.fortresses=Array.isArray(c.fortresses)?c.fortresses:[];
   for(let i=0;i<=c.region;i++){
     const f=c.fortresses[i]||blankFort();
-    f.buildings={tower:0,lumber:0,quarry:0,wall:0,...(f.buildings||{})};
+    f.buildings={house:0,tower:0,lumber:0,quarry:0,wall:0,...(f.buildings||{})};
     f.workers=Array.isArray(f.workers)?f.workers:[];f.project??=null;
     f.maxIntegrity=Math.max(1,Number(f.maxIntegrity)||100);
     f.integrity=Math.max(0,Math.min(f.maxIntegrity,Number.isFinite(Number(f.integrity))?Number(f.integrity):f.maxIntegrity));

@@ -41,7 +41,7 @@ test('fortalezas e portais materializam edifícios, locais vazios e obra em anda
   validModel(createGate(label,{name:'Veyra',cost:180,wood:25,stone:12}));
 });
 test('a fortaleza tem perímetro de pedra, portão aberto e volumes próprios para cada instalação',()=>{
-  const root=createFortress(0,{buildings:{tower:1,lumber:1,quarry:1,wall:1},workers:[],integrity:100},()=>new T.Group());
+  const root=createFortress(0,{buildings:{house:1,tower:1,lumber:1,quarry:1,wall:1},workers:[],integrity:100},()=>new T.Group());
   const names=[];root.traverse(node=>{if(node.name)names.push(node.name);});
   assert.equal(names.filter(name=>name==='Crenellated stone wall').length,5);
   for(const name of ['Open arched gate','Octagonal watchtower','Player shelter','Resource depot','Production workshop'])assert.ok(names.includes(name),name);
@@ -57,6 +57,20 @@ test('etapas de uma torre revelam fundação, fuste e ameias em sequência',()=>
   assert.equal(tower.children[1].visible,false);
   tower.userData.setProgress(.9);
   assert.ok(tower.children.every(stage=>stage.visible));
+  validModel(root);
+});
+test('o abrigo revela paredes e telhado por fases próprias',()=>{
+  const root=createFortress(0,{buildings:{house:0,tower:0,lumber:0,quarry:0,wall:0},project:{type:'house',progress:3,required:9},workers:[],integrity:100},()=>new T.Group());
+  const house=root.userData.constructionAssets[0];
+  house.userData.setProgress(.2);
+  assert.equal(house.children[0].visible,true);
+  assert.equal(house.children[2].visible,false);
+  house.userData.setProgress(.8);
+  assert.equal(house.children[2].visible,true);
+  assert.equal(house.children[3].visible,true);
+  assert.equal(house.children[4].visible,false);
+  house.userData.setProgress(1);
+  assert.ok(house.children.every(stage=>stage.visible));
   validModel(root);
 });
 test('sincronização remove modelos mortos e expirados sem acumular objetos na cena',()=>{

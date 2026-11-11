@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CAMPAIGN_KEY,REGIONS,IDLE_TICK_MS,MAX_OFFLINE_MS,getCampaign,
-  idleProduction,campaignSummary,resolveFortRaid,advanceConstructions,
+  idleProduction,campaignSummary,resolveFortRaid,advanceConstructions,SITE_POSITIONS,
   repairFortress,advanceRegion,startConstruction,depositConstruction,hireWorker
 } from '../src/storage/Campaign.js';
 import {PROFILE_KEY} from '../src/storage/Profile.js';
+import {Game} from '../src/engine/Game.js';
 
 function withStorage(initial,run){
   const old=globalThis.localStorage,values=new Map(Object.entries(initial));
@@ -124,5 +125,28 @@ test('trabalhadores de coleta exigem sua instalação e ficam contratados após 
     const hired=hireWorker(0,'lumberjack');
     assert.equal(hired.ok,true);
     assert.equal(hired.state.fortresses[0].workers[0].role,'lumberjack');
+  });
+});
+test('o herói precisa ficar junto ao canteiro e trabalhadores transportam estoque até a obra',()=>{
+  const initial={region:0,wood:30,stone:18,fortresses:[{buildings:{house:0,tower:1,lumber:0,quarry:0,wall:0},workers:[]}]};
+  withStorage({[CAMPAIGN_KEY]:JSON.stringify(initial)},()=>{
+    startConstruction(0,'lumber');
+    const makeRunner=(x,y)=>{
+      const game=Object.create(Game.prototype);
+      Object.assign(game,{campaign:getCampaign(),campaignSync:60,player:{x,y},productionTimer:60,resourceSpawnTimer:60,raidTimer:60,elapsed:0,
+        interactionMessageTime:0,constructionDepositTimer:0,resourceNodes:[],world:{biomeAt:()=>null},addText(){}});
+      return game;
+    };
+    const far=makeRunner(1000,0);far.updateCampaign(.016);
+    assert.equal(far.campaign.wood,30);
+    assert.equal(far.campaign.fortresses[0].project.progress,0);
+    const pos=SITE_POSITIONS.lumber,near=makeRunner(pos.x,pos.y);near.updateCampaign(.016);
+    assert.equal(near.campaign.wood,28);
+    assert.equal(near.campaign.stone,16);
+    const supplied=near.campaign;supplied.fortresses[0].workers=[{role:'lumberjack'}];
+    globalThis.localStorage.setItem(CAMPAIGN_KEY,JSON.stringify(supplied));
+    const worker=makeRunner(1000,0);worker.updateCampaign(.016);
+    assert.equal(worker.campaign.wood,26);
+    assert.equal(worker.campaign.stone,14);
   });
 });
