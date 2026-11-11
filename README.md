@@ -181,3 +181,7 @@ Os limites de aparição (24 por grupo, 170 simultâneos) são limites
 técnicos, não níveis máximos do personagem. A curva pretende tornar as
 melhorias temporárias e permanentes cada vez mais importantes; o
 equilíbrio exato deve ser avaliado jogando com diferentes classes.
+
+## Skill de 3D procedural
+
+A skill [`procedural-3d`](skills/procedural-3d/SKILL.md) reúne direção de arte, geometria, Blender, tempo real e validação. Para usá-la no Codex, copie `skills/procedural-3d` para `~/.codex/skills/` e invoque `$procedural-3d`. A geração preserva seeds, identidade dos assets e recursos do projeto.
