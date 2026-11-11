@@ -8,7 +8,7 @@ import { updateCombat } from '../systems/Combat.js';
 import { updateProgression, applyChoice, xpForLevel } from '../systems/Progression.js';
 import { getProfile,recordRun } from '../storage/Profile.js';
 import {permanentBonuses} from '../data/metaUpgrades.js';
-import {getCampaign,gatherMaterials,startConstruction,advanceConstructions,hireWorker,advanceRegion,collectIdleProduction,raidFortress,repairFortress,SITE_DEFS,SITE_POSITIONS,WORKERS,WORKER_Y} from '../storage/Campaign.js';
+import {getCampaign,gatherMaterials,startConstruction,depositConstruction,advanceConstructions,hireWorker,advanceRegion,collectIdleProduction,raidFortress,repairFortress,SITE_DEFS,SITE_POSITIONS,WORKERS,WORKER_Y} from '../storage/Campaign.js';
 
 export class Game {
   static DURATION=Infinity;
@@ -44,7 +44,7 @@ export class Game {
     this.resourceNodes=[];this.resourceSpawnTimer=3;
     this.hazards=[];this.encountersSeen=new Set();this.eventBanner=null;this.relics=0;
     this.goldEarned=0;this.towerTimer=0;this.raidTimer=55;this.campaignSync=0;this.productionTimer=15;
-    this.interactionHint=null;this.nearbyInteraction=null;this.interactionMessage='';this.interactionMessageTime=0;
+    this.interactionHint=null;this.nearbyInteraction=null;this.interactionMessage='';this.interactionMessageTime=0;this.constructionDepositTimer=0;
     this.upgrades={};this.weapons=[{id:hero.weapon,level:1,cooldown:.2}];
     this.currentChoices=null;this.paused=false;this.pauseReason=null;this.input.reset();
   }
@@ -139,6 +139,28 @@ export class Game {
       this.addText('✦ OBRA CONCLUÍDA ✦',i*1800,-58,'#f2d493');
       this.interactionMessage='Construção concluída!';this.interactionMessageTime=3;
     }
+    const project=this.campaign.fortresses[this.campaign.region]?.project;
+    if(project&&Number.isFinite(project.woodRequired)){
+      const activeFort=this.campaign.fortresses[this.campaign.region],workers=activeFort.workers||[];
+      const pos=SITE_POSITIONS[project.type],siteX=this.campaign.region*1800+pos.x,nearSite=Math.hypot(p.x-siteX,p.y-pos.y)<48;
+      if(nearSite||workers.length){
+        this.constructionDepositTimer-=dt;
+        if(this.constructionDepositTimer<=0){
+          this.constructionDepositTimer=nearSite?.55:Math.max(.8,2.2/workers.length);
+          const previousProgress=project.progress/project.required;
+          const result=depositConstruction(this.campaign.region,project.type,nearSite?2:Math.min(6,workers.length*2));
+          if(result.delivered){
+            this.campaign=result.state;
+            if(result.completed){
+              this.addText('✦ ESTRUTURA CONCLUÍDA ✦',siteX,pos.y-42,'#f2d493');
+              this.interactionMessage='Construção concluída!';this.interactionMessageTime=3;
+            }else if(Math.floor(result.progress*5)>Math.floor(previousProgress*5)){
+              this.addText(`+${result.wood} MADEIRA · +${result.stone} PEDRA`,siteX,pos.y-30,'#e7d2a2');
+            }
+          }
+        }
+      }
+    }
     this.interactionMessageTime=Math.max(0,this.interactionMessageTime-dt);
     this.resourceSpawnTimer-=dt;
     if(this.resourceSpawnTimer<=0){
@@ -179,8 +201,8 @@ export class Game {
           const level=fort.buildings[key]||0,wood=Math.ceil(def.wood*(1+level*.55)),stone=Math.ceil(def.stone*(1+level*.55));
           const project=fort.project?.type===key;
           options.push({kind:project?'project':'site',key,region:i,x,y,dist,label:project?
-            `Obra em andamento · ${Math.floor(fort.project.progress/fort.project.required*100)}% concluída`:
-            `E · Depositar ${wood} madeira + ${stone} pedra · ${level?'melhorar':'construir'} ${def.name}`});
+            `Obra ${Math.floor(fort.project.progress/fort.project.required*100)}% · permaneça na área para entregar recursos`:
+            `E · Preparar canteiro · ${level?'melhorar':'construir'} ${def.name} · ${wood} madeira + ${stone} pedra`});
         }
       }
       for(const [role,worker] of Object.entries(WORKERS)){
@@ -222,7 +244,7 @@ export class Game {
     this.interactionMessage=result.reason;this.interactionMessageTime=3;
     if(result.ok){
       this.campaign=result.state;
-      if(target.kind==='site')this.addText('✦ MATERIAIS DEPOSITADOS ✦',target.x,target.y-42,'#f2d493');
+      if(target.kind==='site')this.addText('✦ CANTEIRO DEMARCADO ✦',target.x,target.y-42,'#f2d493');
       if(target.kind==='worker')this.addText('✦ TRABALHADOR CONTRATADO ✦',target.x,target.y-42,'#a8e7a2');
       if(target.kind==='repair')this.addText('✦ FORTALEZA REPARADA ✦',target.x,target.y-42,'#a8e7a2');
       if(target.kind==='gate'){

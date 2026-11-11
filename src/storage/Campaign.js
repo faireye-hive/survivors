@@ -10,13 +10,14 @@ export const REGIONS=[
   {name:'Coroa do Eclipse',cost:1500,wood:110,stone:100}
 ];
 export const SITE_DEFS={
+  house:{name:'Abrigo do personagem',icon:'⌂',wood:22,stone:10,seconds:9},
   tower:{name:'Torre de vigia',icon:'⌖',wood:18,stone:8,seconds:7,defense:true},
-  lumber:{name:'Acampamento madeireiro',icon:'♧',wood:24,stone:5,seconds:9},
-  quarry:{name:'Pedreira',icon:'⬡',wood:14,stone:12,seconds:10},
+  lumber:{name:'Depósito de recursos',icon:'▰',wood:24,stone:5,seconds:9},
+  quarry:{name:'Oficina de produção',icon:'⚒',wood:14,stone:12,seconds:10},
   wall:{name:'Muralha',icon:'▤',wood:30,stone:20,seconds:12,defense:true}
 };
 export const SITE_POSITIONS={
-  tower:{x:-132,y:-76},lumber:{x:132,y:-76},quarry:{x:-132,y:82},wall:{x:132,y:82}
+  house:{x:-55,y:-30},tower:{x:-285,y:-145},lumber:{x:132,y:-76},quarry:{x:-132,y:82},wall:{x:132,y:82}
 };
 export const WORKERS={
   lumberjack:{name:'Lenhador',icon:'🪓',gold:70,x:-90},
@@ -26,7 +27,7 @@ export const WORKERS={
 export const WORKER_Y=118;
 export const IDLE_TICK_MS=15000;
 export const MAX_OFFLINE_MS=24*60*60*1000;
-const blankFort=()=>({buildings:{tower:1,lumber:0,quarry:0,wall:0},workers:[],project:null,integrity:100,maxIntegrity:100,lastRaid:null});
+const blankFort=()=>({buildings:{house:0,tower:1,lumber:0,quarry:0,wall:0},workers:[],project:null,integrity:100,maxIntegrity:100,lastRaid:null});
 const fresh=()=>({region:0,wood:30,stone:18,fortresses:[blankFort()],lastProductionAt:Date.now()});
 function normalize(raw){
   const c={...fresh(),...raw};
@@ -34,7 +35,7 @@ function normalize(raw){
   c.fortresses=Array.isArray(c.fortresses)?c.fortresses:[];
   for(let i=0;i<=c.region;i++){
     const f=c.fortresses[i]||blankFort();
-    f.buildings={tower:0,lumber:0,quarry:0,wall:0,...(f.buildings||{})};
+    f.buildings={house:0,tower:0,lumber:0,quarry:0,wall:0,...(f.buildings||{})};
     f.workers=Array.isArray(f.workers)?f.workers:[];f.project??=null;
     f.maxIntegrity=Math.max(1,Number(f.maxIntegrity)||100);
     f.integrity=Math.max(0,Math.min(f.maxIntegrity,Number.isFinite(Number(f.integrity))?Number(f.integrity):f.maxIntegrity));
@@ -121,14 +122,29 @@ export function startConstruction(region,key){
   if(fort.project)return {ok:false,reason:'Já existe uma obra em andamento nesta fortaleza.',state:c};
   const level=fort.buildings[key]||0,scale=1+level*.55;
   const wood=Math.ceil(def.wood*scale),stone=Math.ceil(def.stone*scale);
-  if(c.wood<wood||c.stone<stone)return {ok:false,reason:`Faltam materiais: ${wood} madeira e ${stone} pedra.`,state:c};
-  c.wood-=wood;c.stone-=stone;
-  fort.project={type:key,progress:0,required:def.seconds+level*2};
-  save(c);return {ok:true,reason:`Materiais entregues. ${def.name} será concluída enquanto a expedição continua.`,state:c};
+  fort.project={type:key,progress:0,required:def.seconds+level*2,woodRequired:wood,stoneRequired:stone,woodDelivered:0,stoneDelivered:0};
+  save(c);return {ok:true,reason:`Canteiro preparado. Permaneça na área para entregar materiais à ${def.name.toLowerCase()}.`,state:c};
+}
+/** Deliver a physical load from the campaign stores to the active site. */
+export function depositConstruction(region,key,load=2){
+  const c=getCampaign(),fort=c.fortresses[region],project=fort?.project;
+  if(!project||project.type!==key||!Number.isFinite(project.woodRequired))return {ok:false,state:c,delivered:false};
+  const amount=Math.max(1,Math.floor(load));
+  const wood=Math.min(amount,c.wood,project.woodRequired-project.woodDelivered);
+  const stone=Math.min(amount,c.stone,project.stoneRequired-project.stoneDelivered);
+  if(!wood&&!stone)return {ok:false,state:c,delivered:false};
+  c.wood-=wood;c.stone-=stone;project.woodDelivered+=wood;project.stoneDelivered+=stone;
+  const fraction=Math.min(project.woodDelivered/project.woodRequired,project.stoneDelivered/project.stoneRequired);
+  project.progress=project.required*fraction;
+  let completed=false;
+  if(project.woodDelivered>=project.woodRequired&&project.stoneDelivered>=project.stoneRequired){
+    fort.buildings[key]=(fort.buildings[key]||0)+1;fort.project=null;completed=true;
+  }
+  save(c);return {ok:true,state:c,delivered:true,wood,stone,progress:fraction,completed};
 }
 export function tickConstruction(c,region,key,dt){
   const fort=c.fortresses[region],project=fort?.project;
-  if(!project||project.type!==key)return {done:false,state:c};
+  if(!project||project.type!==key||Number.isFinite(project.woodRequired))return {done:false,state:c};
   project.progress=Math.min(project.required,project.progress+dt);
   if(project.progress>=project.required){
     fort.buildings[key]=(fort.buildings[key]||0)+1;fort.project=null;
@@ -152,6 +168,8 @@ export function hireWorker(region,role){
   if(!fort||!def)return {ok:false,reason:'Contratação indisponível.',state:c};
   if(fort.workers.some(w=>w.role===role))return {ok:false,reason:`Já há um ${def.name.toLowerCase()} nesta base.`,state:c};
   if(role==='guard'&&!(fort.buildings.tower||0))return {ok:false,reason:'Construa uma torre antes de contratar a sentinela.',state:c};
+  if(role==='lumberjack'&&!(fort.buildings.lumber||0))return {ok:false,reason:'Construa o depósito de recursos antes de contratar o lenhador.',state:c};
+  if(role==='miner'&&!(fort.buildings.quarry||0))return {ok:false,reason:'Construa a oficina de produção antes de contratar o minerador.',state:c};
   const paid=spendGold(def.gold);
   if(!paid.ok)return {ok:false,reason:`Faltam ${def.gold-getProfile().gold} moedas para contratar.`,state:c};
   fort.workers.push({role,hiredAt:Date.now()});save(c);

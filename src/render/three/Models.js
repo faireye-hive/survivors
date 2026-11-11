@@ -51,7 +51,7 @@ export function compileModel(root){
     const merged=mergeGeometries(pieces,false);for(const piece of pieces)piece.dispose();
     if(!merged)continue;
     const mesh=new T.Mesh(merged,mat);mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.ownGeometry=true;
-    for(const old of meshes){root.remove(old);if(old.userData.ownGeometry)old.geometry.dispose();}root.add(mesh);
+    for(const old of meshes){root.remove(old);if(old.userData.ownGeometry)old.geometry.dispose();if(old.userData.ownMaterial)old.material.dispose();}root.add(mesh);
   }
   root.userData.compiled=true;return root;
 }

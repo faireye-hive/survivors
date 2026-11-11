@@ -105,16 +105,35 @@ export class Renderer3D{
       }else if(root.userData.telegraph)root.userData.telegraph.visible=false;
     });
     for(let i=0;i<game.campaign.fortresses.length;i++){
-      const fort=game.campaign.fortresses[i],signature=JSON.stringify([fort.buildings,fort.workers,Math.round(fort.integrity)]);
+      const fort=game.campaign.fortresses[i],signature=JSON.stringify([fort.buildings,fort.workers,Math.round(fort.integrity),fort.project?.type||null]);
       let entry=this.forts.get(i);
       if(!entry||entry.signature!==signature){
         if(entry)this.release(entry.root);
         const root=createFortress(i,fort,this.label.bind(this));this.scene.add(root);entry={root,signature};this.forts.set(i,entry);
       }
       entry.root.visible=Math.abs(px-i*36)<25;
-      const progress=entry.root.userData.project;
-      progress.root.visible=!!fort.project;
-      if(fort.project){const pos=SITE_POSITIONS[fort.project.type];progress.root.position.set(pos.x/UNIT,2.5,pos.y/UNIT);progress.root.quaternion.copy(this.camera.quaternion);progress.fill.scale.x=1.7*Math.min(1,fort.project.progress/fort.project.required);}
+      const construction=fort.project;
+      if(construction){
+        const progress=Math.min(1,construction.progress/construction.required);
+        if(construction.type==='wall')entry.root.userData.palisade.visible=progress<.2&&!fort.buildings.wall;
+        for(const asset of entry.root.userData.constructionAssets||[])asset.userData.setProgress?.(progress);
+        for(const pile of entry.root.userData.materialPiles||[]){
+          const stored=pile.kind==='wood'?construction.woodDelivered/construction.woodRequired:construction.stoneDelivered/construction.stoneRequired;
+          pile.mesh.visible=Number.isFinite(stored)?stored>=pile.threshold:progress>=pile.threshold;
+        }
+      }
+      for(let wi=0;wi<entry.root.userData.workers.length;wi++){
+        const actor=entry.root.userData.workers[wi],home=actor.userData.home,role=actor.userData.workerRole;
+        const worksite=fort.project&&SITE_POSITIONS[fort.project.type];
+        const dest=worksite?[worksite.x/UNIT,worksite.y/UNIT]:role==='guard'?[6,0]:role==='lumberjack'?[SITE_POSITIONS.lumber.x/UNIT,SITE_POSITIONS.lumber.y/UNIT]:[SITE_POSITIONS.quarry.x/UNIT,SITE_POSITIONS.quarry.y/UNIT];
+        const blend=(Math.sin(t*.48+wi*2.1)+1)*.5;
+        const wx=T.MathUtils.lerp(home[0],dest[0],blend),wz=T.MathUtils.lerp(home[1],dest[1],blend);
+        actor.position.set(wx,.1,wz);
+        animateActor(actor,{vx:dest[0]-home[0],vy:dest[1]-home[1],facing:Math.atan2(dest[1]-home[1],dest[0]-home[0])},t);
+      }
+      const progressBar=entry.root.userData.project;
+      progressBar.root.visible=!!fort.project;
+      if(fort.project){const pos=SITE_POSITIONS[fort.project.type],fraction=Math.min(1,fort.project.progress/fort.project.required);progressBar.root.position.set(pos.x/UNIT,2.5,pos.y/UNIT);progressBar.root.quaternion.copy(this.camera.quaternion);progressBar.fill.scale.x=1.7*fraction;progressBar.fill.position.x=-(1-fraction)*.85;}
     }
     for(const [i,entry] of this.forts)if(i>=game.campaign.fortresses.length){this.release(entry.root);this.forts.delete(i);}
     const region=game.campaign.region;

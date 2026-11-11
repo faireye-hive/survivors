@@ -28,7 +28,11 @@ Cada espécie de monstro possui anatomia própria. As partes rígidas de cada ar
 
 `Campaign.js` conserva o save `cronicas_eter_campaign_v1` e normaliza campos novos de integridade sem apagar regiões, materiais, trabalhadores ou edifícios antigos. `idleProduction` calcula a produção por ciclos de 15 segundos e limita o tempo offline a 24 horas; fortalezas violadas não produzem até serem reparadas. `campaignSummary` fornece região atual, taxas de produção, integridade e custos da próxima fronteira ao HUD.
 
-As obras avançam durante uma expedição ativa, sem exigir que o herói fique no canteiro. A cada 55 segundos de jogo, `raidFortress` resolve uma incursão na fortaleza atual: torres e sentinelas reduzem a força do ataque e muralhas absorvem dano. O núcleo permite reparar 20 pontos por 5 madeira e 5 pedra. O relógio das incursões reinicia no início da expedição, portanto ataques não avançam offline.
+Novos canteiros são preparados com `E` e consomem madeira/pedra em cargas pequenas enquanto o herói permanece na área; cada entrega atualiza o save e revela novas malhas de fundação, armação, paredes, telhado e acabamento. Trabalhadores contratados aparecem como personagens no mundo, percorrem o trajeto entre o posto e o canteiro e podem transportar materiais do estoque para uma obra ativa. Lenhadores e mineradores exigem o depósito e a oficina correspondentes. Projetos antigos sem campos de entrega continuam compatíveis com o avanço por tempo.
+
+`Environment.js` gera abrigos, depósitos e oficinas com telhado de duas águas em `BufferGeometry`, torres octogonais em fases, um portão em arco extrudado e segmentos de muralha com ameias, cursos de alvenaria e contrafortes. A paliçada inicial deixa a passagem livre; o muro de pedra substitui esse contorno quando começa a obra. As partes estáticas são mescladas por estágio e os recursos geométricos próprios são descartados ao reconstruir a fortaleza.
+
+A cada 55 segundos de jogo, `raidFortress` resolve uma incursão na fortaleza atual: torres e sentinelas reduzem a força do ataque e muralhas absorvem dano. O núcleo permite reparar 20 pontos por 5 madeira e 5 pedra. O relógio das incursões reinicia no início da expedição, portanto ataques não avançam offline.
 
 ## Validação
 
