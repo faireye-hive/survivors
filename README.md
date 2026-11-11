@@ -185,3 +185,9 @@ equilíbrio exato deve ser avaliado jogando com diferentes classes.
 ## Skill de 3D procedural
 
 A skill [`procedural-3d`](skills/procedural-3d/SKILL.md) reúne direção de arte, geometria, Blender, tempo real e validação. Para usá-la no Codex, copie `skills/procedural-3d` para `~/.codex/skills/` e invoque `$procedural-3d`. A geração preserva seeds, identidade dos assets e recursos do projeto.
+
+## Primeiro modelo com a skill: Afloramento de Éter
+
+Os recursos coletáveis de pedra usam um afloramento procedural com fraturas, estratos, líquens e cristais de Éter. O gerador expõe seed, escala, desgaste, quantidade e cor dos cristais; a regeneração preserva a posição do asset e descarta os recursos substituídos. O modelo padrão tem **746 triângulos e 3 materiais**, sem texturas externas.
+
+Use `npm run model:export` para gerar o [GLB](public/models/aether-ore.glb) e o manifesto. Durante o desenvolvimento, abra `/tests/fixtures/aether-ore.html` para ajustar e inspecionar o modelo. Veja [API, parâmetros, preview e validação](docs/AETHER_ORE.md).

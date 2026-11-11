@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Afloramento de Éter · Modelo 01</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101b1e;color:#e6e9df}
+    *{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button,select,input[type=text],input[type=color]{border:1px solid #3b5255;background:#1a2b2d;color:inherit;border-radius:5px;padding:10px}button{cursor:pointer}button:hover{border-color:#a8cbbc}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #a8cbbc;outline-offset:3px}
+    header{display:flex;align-items:center;justify-content:space-between;padding:22px 32px;border-bottom:1px solid #304044;gap:20px}a{color:#b8d8c9;text-decoration:none}.brand{font-size:12px;letter-spacing:.16em;text-transform:uppercase}.index{color:#92b3a5;font:12px monospace}
+    main{display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:calc(100dvh - 64px)}.stage{position:relative;min-height:620px;background:radial-gradient(ellipse at 48% 50%,#253d40 0%,#152326 65%,#101b1e 100%)}canvas{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:none}.intro{position:absolute;top:35px;left:36px;pointer-events:none;z-index:1}.eyebrow{font-size:10px;letter-spacing:.2em;color:#a7cabb;text-transform:uppercase}.intro h1{font:400 clamp(28px,3.4vw,50px) Georgia,serif;letter-spacing:-.03em;margin:12px 0}.intro p{font-size:12px;line-height:1.6;color:#a5b6b6;max-width:310px}.caption{position:absolute;bottom:28px;left:36px;right:30px;display:flex;gap:20px;justify-content:space-between;pointer-events:none;font-size:10px;letter-spacing:.08em;color:#97aeaa}.caption strong{color:#d7e3d8;font-weight:400}aside{padding:32px 24px;background:#142225;border-left:1px solid #304044}.section{font:10px monospace;letter-spacing:.16em;text-transform:uppercase;color:#a2bdb1;margin:0 0 24px}.control{display:grid;gap:9px;margin-bottom:23px}.control label{display:flex;justify-content:space-between;font-size:12px;color:#d8e0d7}.value{color:#9db5ae;font:11px monospace}input[type=range]{width:100%;accent-color:#98c6b0}input[type=color]{width:100%;height:38px;padding:4px}input[type=text],select{width:100%;font-size:12px}.buttons{display:grid;gap:9px;margin:27px 0 24px}.primary{background:#aac8b5;color:#162b25;border-color:#aac8b5;font-size:12px}.secondary{font-size:12px}#status{font:11px/1.7 monospace;color:#a6b7ad;border-top:1px solid #304044;padding-top:20px;white-space:pre-wrap}.note{font-size:11px;color:#91a5a4;line-height:1.65;margin-top:22px}#error{color:#ffc4ac;white-space:pre-wrap;font:12px/1.6 monospace}.hidden{display:none!important}
+    @media(max-width:760px){header{padding:18px 20px}.brand{font-size:10px}main{grid-template-columns:1fr}.stage{min-height:62dvh}.intro{top:22px;left:22px}.intro h1{font-size:30px}.intro p{max-width:230px;font-size:11px}.caption{left:22px;font-size:9px;flex-direction:column;gap:6px;bottom:22px}aside{border-left:0;border-top:1px solid #304044;padding:24px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.control{min-width:0}.buttons{grid-template-columns:1fr 1fr}#status{font-size:10px}.note{margin-bottom:0}}
+  </style>
+</head>
+<body>
+<header><a class="brand" href="/">✧ Crônicas do Éter</a><span class="index">ESTUDO DE MODELO · 001</span></header>
+<main>
+  <section class="stage" aria-label="Visualização 3D interativa">
+    <div class="intro"><span class="eyebrow">Fronteiras / Recursos minerais</span><h1>Afloramento de Éter</h1><p>Ardósia fraturada, líquens nas faces protegidas e uma fissura de cristais expostos.</p></div>
+    <canvas id="model" aria-label="Modelo 3D de uma rocha com cristais de Éter. Arraste para girar e role para aproximar."></canvas>
+    <div class="caption"><span>ARRASTE PARA GIRAR · ROLE PARA APROXIMAR</span><strong>FONTE PROCEDURAL · ESCALA EM METROS</strong></div>
+  </section>
+  <aside>
+    <p class="section">01 / Forma e superfície</p>
+    <div class="controls">
+      <div class="control"><label for="seed">Seed</label><input id="seed" type="text" value="aether-001" maxlength="128"></div>
+      <div class="control"><label for="scale">Escala <output id="scale-value" class="value">1.00×</output></label><input id="scale" type="range" min="0.5" max="1.6" step="0.05" value="1"></div>
+      <div class="control"><label for="weathering">Desgaste e líquen <output id="weathering-value" class="value">65%</output></label><input id="weathering" type="range" min="0" max="1" step="0.05" value="0.65"></div>
+      <div class="control"><label for="crystalAmount">Cristais expostos <output id="crystalAmount-value" class="value">75%</output></label><input id="crystalAmount" type="range" min="0" max="1" step="0.05" value="0.75"></div>
+      <div class="control"><label for="crystalColor">Cor do minério</label><input id="crystalColor" type="color" value="#73d6c4"></div>
+      <div class="control"><label for="lighting">Iluminação</label><select id="lighting"><option value="frontier">Fronteira · luz quente</option><option value="neutral">Estúdio · luz neutra</option></select></div>
+    </div>
+    <div class="buttons"><button id="regenerate" class="primary">Aplicar parâmetros</button><button id="export" class="secondary">Baixar modelo .GLB ↓</button></div>
+    <button id="compare" class="secondary" style="width:100%">Abrir modelo exportado</button>
+    <output id="status" aria-live="polite"></output><p id="error" role="alert"></p>
+    <p class="note">A cor e o desgaste preservam a forma. Regenerar mantém a posição do modelo. O mesmo gerador aparece nos recursos de pedra do jogo.</p>
+  </aside>
+</main>
+<script type="module" src="./aether-ore-preview.js"></script>
+</body>
+</html>
