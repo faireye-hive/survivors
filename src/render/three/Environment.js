@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {geometry,material,part,group,humanoid,compileModel} from './Models.js';
 import {hash2} from '../../core/math.js';
+import {createProceduralTree,disposeProceduralTree} from './assets/ProceduralTree.js';
 import {SITE_POSITIONS,WORKERS,WORKER_Y,REGIONS} from '../../storage/Campaign.js';
 import {FORTRESS_BOUNDS} from '../../world/FortressBounds.js';
 
@@ -20,8 +21,20 @@ export class Terrain{
   constructor(scene){
     this.root=group(scene);this.center='';
     this.floor=instances(this.root,'box','#ffffff',COUNT,false);
-    this.trunks=instances(this.root,'cylinder','#624b36',COUNT);
-    this.leaves=instances(this.root,'cone','#487951',COUNT*2);
+    // Four shared tree variants: two draw calls per variant, regardless of population.
+    this.treeVariants=Array.from({length:4},(_,i)=>{
+      const prototype=createProceduralTree({seed:'grove-variant:'+i,id:'forest-'+i,
+        height:3.5,age:.55+i*.13,canopySpread:.86+i*.09,leafDensity:.85,
+        lean:.17+i*.08,leafColor:['#497f55','#568557','#62895d','#447960'][i]});
+      const [trunk,crown]=prototype.children;
+      const bark=new T.InstancedMesh(trunk.geometry,trunk.material,COUNT);
+      const leaves=new T.InstancedMesh(crown.geometry,crown.material,COUNT);
+      for(const mesh of [bark,leaves]){
+        mesh.count=0;mesh.castShadow=true;mesh.receiveShadow=true;
+        mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);this.root.add(mesh);
+      }
+      return {prototype,bark,leaves};
+    });
     this.rocks=instances(this.root,'sphere','#76877a',COUNT);
     this.grass=instances(this.root,'cone','#5d8b51',COUNT*4,false);
     this.crystals=instances(this.root,'crystal','#8d80bb',COUNT);
@@ -29,8 +42,10 @@ export class Terrain{
   }
   update(game){
     const px=Math.floor(game.player.x/96/3)*3,py=Math.floor(game.player.y/96/3)*3;
-    const key=px+':'+py+':'+game.campaign.region;if(key===this.center)return;this.center=key;
-    let f=0,t=0,l=0,r=0,g=0,c=0,u=0;
+    const woods=game.resourceNodes.filter(n=>n.kind==='wood');
+    const reserve=woods.map(n=>Math.round(n.x)+':'+Math.round(n.y)).sort().join('|');
+    const key=px+':'+py+':'+game.campaign.region+':'+reserve;if(key===this.center)return;this.center=key;
+    let f=0,r=0,g=0,c=0,u=0;const treeCounts=this.treeVariants.map(()=>0);
     const colors={sanctuary:'#456848',meadow:'#3c6143',grove:'#31503e',ruins:'#4e5b50',blight:'#3a414c'};
     for(let dy=-HALF;dy<=HALF;dy++)for(let dx=-HALF;dx<=HALF;dx++){
       const tx=px+dx,ty=py+dy,cell=game.world.tileAt(tx,ty),x=(tx+.5)*TILE,z=(ty+.5)*TILE;
@@ -41,21 +56,29 @@ export class Terrain{
       if(inFort||Math.hypot(x-(game.campaign.region*36+9),z)<1)continue;
       for(let i=0;i<3;i++)stamp(this.grass,g++,x+(rng(i+20)-.5)*TILE,.12,z+(rng(i+30)-.5)*TILE,.07,.24+rng(i+10)*.15,.08,rng(i)*6);
       if(cell.kind==='grove'&&rng(2)>.32){
-        const h=1.6+rng(3)*1.3;
-        stamp(this.trunks,t++,x,h*.35,z,.13,h*.7,.13);
-        stamp(this.leaves,l++,x,h*.75,z,.8,h*.9,.8,0,rng(4)>.5?'#3b7252':'#568557');
-        stamp(this.leaves,l++,x,h*1.02,z,.58,h*.6,.58);
+        // Keep interactive wood nodes visually distinct and accessible.
+        if(woods.some(n=>Math.hypot(n.x/UNIT-x,n.y/UNIT-z)<1.28))continue;
+        const variant=Math.min(this.treeVariants.length-1,Math.floor(rng(17)*this.treeVariants.length));
+        const instance=this.treeVariants[variant],index=treeCounts[variant]++;
+        const width=.78+rng(4)*.28,height=.73+rng(3)*.3,angle=rng(5)*Math.PI*2;
+        stamp(instance.bark,index,x,0,z,width,height,width,angle);
+        stamp(instance.leaves,index,x,0,z,width,height,width,angle);
       }else if(cell.kind==='ruins'&&rng(3)>.55){
         stamp(this.ruins,u++,x,.35,z,.4,.7+rng(4),.5,rng(5)*6);
       }else if(cell.kind==='blight'&&rng(3)>.5){
         stamp(this.crystals,c++,x,.5,z,.23,.7,.23,rng(4)*6);
       }else if(rng(4)>.87)stamp(this.rocks,r++,x,.2,z,.3+rng(5)*.3,.2+rng(6)*.25,.35,rng(7)*6);
     }
-    for(const [mesh,count] of [[this.floor,f],[this.trunks,t],[this.leaves,l],[this.rocks,r],[this.grass,g],[this.crystals,c],[this.ruins,u]]){
+    for(let i=0;i<this.treeVariants.length;i++){
+      for(const mesh of [this.treeVariants[i].bark,this.treeVariants[i].leaves]){
+        mesh.count=treeCounts[i];mesh.instanceMatrix.needsUpdate=true;
+      }
+    }
+    for(const [mesh,count] of [[this.floor,f],[this.rocks,r],[this.grass,g],[this.crystals,c],[this.ruins,u]]){
       mesh.count=count;mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
     }
   }
-  destroy(){for(const mesh of this.root.children)mesh.dispose?.();this.root.removeFromParent();}
+  destroy(){for(const mesh of this.root.children)mesh.dispose?.();for(const v of this.treeVariants)disposeProceduralTree(v.prototype);this.root.removeFromParent();}
 }
 const palette={stone:'#858c81',stoneLight:'#b4b5a1',mortar:'#555d57',wood:'#765039',woodLight:'#ae8250',roof:'#514650',iron:'#343b3a',blueprint:'#9dceb8'};
 function materialPbr(color,roughness=.9,metalness=0){const m=new T.MeshStandardMaterial({color,roughness,metalness,flatShading:true});m.userData.ownMaterial=true;return m;}
