@@ -1,0 +1,24 @@
+{
+  "asset": "aether-ore-v1",
+  "generatorVersion": 1,
+  "threeRevision": "187",
+  "units": "meters",
+  "upAxis": "Y",
+  "origin": "ground center",
+  "parameters": {
+    "seed": "aether-001",
+    "id": "ore-001",
+    "scale": 1,
+    "weathering": 0.65,
+    "crystalAmount": 0.75,
+    "crystalColor": "#73d6c4"
+  },
+  "size": [
+    2.239930510520935,
+    1.5732052326202393,
+    1.6907947659492493
+  ],
+  "triangles": 746,
+  "materials": 3,
+  "bytes": 84580
+}

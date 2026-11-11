@@ -9,7 +9,7 @@ await import('/src/main.js');
 const params=new URLSearchParams(location.search);
 const frameTimes=[];let lastFrame=performance.now();function measure(now){frameTimes.push(now-lastFrame);if(frameTimes.length>60)frameTimes.shift();lastFrame=now;requestAnimationFrame(measure);}requestAnimationFrame(measure);
 const report=document.createElement('output');report.id='renderer-status';report.hidden=true;document.body.append(report);
-setInterval(()=>{const {game}=window.__ETER_DEV__,gpu=game.renderer.gpu;report.textContent=JSON.stringify({errors:runtimeErrors,hp:game.player.hp,insideEnemies:game.enemies.filter(e=>game.campaign.fortresses.some((_,i)=>Math.abs(e.x-i*1800)<300+e.radius&&Math.abs(e.y)<165+e.radius)).length,fps:Math.round(1000/(frameTimes.reduce((a,b)=>a+b,0)/Math.max(1,frameTimes.length))),calls:gpu.info.render.calls,triangles:gpu.info.render.triangles,geometries:gpu.info.memory.geometries,textures:gpu.info.memory.textures,elapsed:game.elapsed,kills:game.kills,enemies:game.enemies.length,paused:game.paused,player:{x:game.player.x,y:game.player.y},form:game.player.classId});},500);
+setInterval(()=>{const {game}=window.__ETER_DEV__,gpu=game.renderer.gpu;report.textContent=JSON.stringify({errors:runtimeErrors,hp:game.player.hp,insideEnemies:game.enemies.filter(e=>game.campaign.fortresses.some((_,i)=>Math.abs(e.x-i*1800)<300+e.radius&&Math.abs(e.y)<165+e.radius)).length,fps:Math.round(1000/(frameTimes.reduce((a,b)=>a+b,0)/Math.max(1,frameTimes.length))),calls:gpu.info.render.calls,triangles:gpu.info.render.triangles,geometries:gpu.info.memory.geometries,textures:gpu.info.memory.textures,resources:game.resourceNodes.length,resourceAssets:[...(game.renderer.collections.get('resources')?.values()||[])].map(root=>root.userData.assetId||'wood'),elapsed:game.elapsed,kills:game.kills,enemies:game.enemies.length,paused:game.paused,player:{x:game.player.x,y:game.player.y},form:game.player.classId});},500);
 
 if(params.has('protection')){
  const {game,ui}=window.__ETER_DEV__;const {spawnEnemy}=await import('/src/systems/Enemies.js');
@@ -41,6 +41,11 @@ if(params.has('construction')){
  fort.buildings={house:type==='house'?0:1,tower:0,lumber:0,quarry:0,wall:0};
  fort.project={type,progress:12*progress,required:12,woodRequired,stoneRequired,woodDelivered:woodRequired*progress,stoneDelivered:stoneRequired*progress};
  ui.update(game,true);game.render();
+}
+if(params.has('ore')){
+ const {game}=window.__ETER_DEV__;game.start('guardian');cancelAnimationFrame(game.raf);game.paused=true;game.enemies=[];
+ game.resourceNodes=[{id:'ore-preview',kind:'stone',x:game.player.x-40,y:game.player.y+300}];
+ game.render();
 }
 if(params.has('metrics')){report.hidden=false;report.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;max-width:420px;padding:8px 10px;border-radius:7px;background:#10252be8;color:#f5ead0;font:11px ui-monospace,monospace;pointer-events:none';}
 </script>`;

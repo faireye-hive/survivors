@@ -3,6 +3,7 @@ import {humanoid,creature,animateActor,part,group,geometry,material,disposeModel
 import {Terrain,UNIT,createFortress,createGate,disposeEnvironment} from './Environment.js';
 import {REGIONS,SITE_POSITIONS} from '../../storage/Campaign.js';
 import {threatAt} from '../../data/difficulty.js';
+import {createAetherOre} from './assets/AetherOre.js';
 
 const point=new T.Vector3();
 export class Renderer3D{
@@ -11,7 +12,7 @@ export class Renderer3D{
     this.gpu=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.gpu.setClearColor('#263f3c');this.gpu.outputColorSpace=T.SRGBColorSpace;
     this.gpu.toneMapping=T.ACESFilmicToneMapping;this.gpu.toneMappingExposure=1.22;
-    this.gpu.shadowMap.enabled=true;this.gpu.shadowMap.type=T.PCFSoftShadowMap;
+    this.gpu.shadowMap.enabled=true;this.gpu.shadowMap.type=T.PCFShadowMap;
     this.scene=new T.Scene();this.scene.background=new T.Color('#263f3c');this.scene.fog=new T.Fog('#263f3c',22,46);
     this.camera=new T.PerspectiveCamera(43,1,.1,110);
     this.scene.add(new T.HemisphereLight('#d8e8dd','#34473d',2.2));
@@ -143,10 +144,11 @@ export class Renderer3D{
     }
     if(this.gate){this.gate.userData.ring.rotation.z=Math.sin(t)*.04;this.gate.userData.portal.scale.x=.61+Math.sin(t*3)*.025;}
     this.sync('resources',game.resourceNodes.filter(nearby),node=>{
+      if(node.kind!=='wood')return createAetherOre({seed:`stone:${node.x}:${node.y}`,id:String(node.id??`${node.x}:${node.y}`),scale:.62});
       const root=group();
       if(node.kind==='wood'){
         part(root,'cylinder','#79543a',[0,.6,0],[.13,1.2,.13]);part(root,'cone','#50915e',[0,1.65,0],[.72,1.7,.72]);
-      }else for(let i=0;i<4;i++)part(root,'crystal','#9eafb1',[(i%2)*.35-.15,.27+(i%2)*.1,Math.floor(i/2)*.3-.1],[.3,.5,.3]);
+      }
       return root;
     },(root,node)=>root.position.set(node.x/UNIT,0,node.y/UNIT));
     this.sync('drops',game.drops.filter(nearby),drop=>{

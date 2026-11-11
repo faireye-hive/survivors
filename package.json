@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --test"
+    "test": "node --test",
+    "model:export": "node scripts/export-aether-ore.mjs"
   },
   "devDependencies": {
     "vite": "^6.3.5"
