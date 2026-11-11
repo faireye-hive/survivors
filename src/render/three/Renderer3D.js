@@ -4,6 +4,7 @@ import {Terrain,UNIT,createFortress,createGate,disposeEnvironment} from './Envir
 import {REGIONS,SITE_POSITIONS} from '../../storage/Campaign.js';
 import {threatAt} from '../../data/difficulty.js';
 import {createAetherOre} from './assets/AetherOre.js';
+import {createProceduralTree} from './assets/ProceduralTree.js';
 
 const point=new T.Vector3();
 export class Renderer3D{
@@ -144,12 +145,9 @@ export class Renderer3D{
     }
     if(this.gate){this.gate.userData.ring.rotation.z=Math.sin(t)*.04;this.gate.userData.portal.scale.x=.61+Math.sin(t*3)*.025;}
     this.sync('resources',game.resourceNodes.filter(nearby),node=>{
-      if(node.kind!=='wood')return createAetherOre({seed:`stone:${node.x}:${node.y}`,id:String(node.id??`${node.x}:${node.y}`),scale:.62});
-      const root=group();
-      if(node.kind==='wood'){
-        part(root,'cylinder','#79543a',[0,.6,0],[.13,1.2,.13]);part(root,'cone','#50915e',[0,1.65,0],[.72,1.7,.72]);
-      }
-      return root;
+      if(node.kind==='wood')return createProceduralTree({seed:`wood:${Math.round(node.x)}:${Math.round(node.y)}`,
+        id:String(node.id??`${node.x}:${node.y}`),height:3.4,age:.85,leafDensity:.9,quality:'hero'});
+      return createAetherOre({seed:`stone:${node.x}:${node.y}`,id:String(node.id??`${node.x}:${node.y}`),scale:.62});
     },(root,node)=>root.position.set(node.x/UNIT,0,node.y/UNIT));
     this.sync('drops',game.drops.filter(nearby),drop=>{
       const root=group();let kind='crystal',color='#65e0d3',s=.13;

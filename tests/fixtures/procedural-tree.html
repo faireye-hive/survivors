@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Procedural Tree Studio · preview</title>
+  <style>
+    :root{font:16px system-ui;color:#e9ede6;background:#161e1c}*{box-sizing:border-box}body{margin:0;display:grid;grid-template-columns:minmax(0,1fr) 325px;min-height:100vh}#stage{min-height:550px;position:relative;background:radial-gradient(#365048,#172725)}canvas{width:100%;height:100%;display:block;touch-action:none}aside{background:#202c29;padding:22px;overflow:auto;border-left:1px solid #3a5148}h1{font-size:21px;margin:0 0 8px}p,small{color:#b3c8bd;line-height:1.4}label{display:block;margin:17px 0 5px}input,select,button{width:100%;font:inherit;color:inherit;border:1px solid #50695b;border-radius:8px;padding:8px;background:#2e4039}input[type=range]{padding:0}button{cursor:pointer;margin-top:12px;background:#40684f}button:hover{background:#52795f}#stats{position:absolute;top:16px;left:16px;white-space:pre-line;background:#10251fc9;padding:10px 13px;border-radius:9px;line-height:1.6;font-size:13px}#error{color:#ffafa8}section{border-top:1px solid #4c6258;margin-top:20px;padding-top:12px}@media(max-width:760px){body{grid-template-columns:1fr}#stage{height:58vh;min-height:350px}aside{border-left:0;border-top:1px solid #3a5148}}
+  </style>
+</head>
+<body>
+  <div id="stage"><canvas id="model" aria-label="Visualizador da árvore procedural 3D"></canvas><div id="stats">Preparando preview…</div></div>
+  <aside>
+    <h1>Árvore procedural</h1><p>Skill <code>procedural-3d</code> · Three.js · geometria real, sem texturas externas. Arraste para girar; scroll para zoom.</p>
+    <label for="seed">Seed</label><input id="seed" value="grove-001" maxlength="128">
+    <label for="height">Altura (m)</label><input id="height" type="range" min="1.5" max="8" step="0.1" value="3.5"><small id="height-val"></small>
+    <label for="age">Maturidade</label><input id="age" type="range" min="0" max="1" step="0.05" value="0.75"><small id="age-val"></small>
+    <label for="canopySpread">Largura da copa</label><input id="canopySpread" type="range" min="0.6" max="1.5" step="0.05" value="1"><small id="canopySpread-val"></small>
+    <label for="leafDensity">Densidade da folhagem</label><input id="leafDensity" type="range" min="0" max="1" step="0.05" value="0.85"><small id="leafDensity-val"></small>
+    <label for="lean">Curvatura do tronco</label><input id="lean" type="range" min="0" max="1" step="0.05" value="0.2"><small id="lean-val"></small>
+    <label for="leafColor">Cor das folhas</label><input id="leafColor" type="color" value="#568557">
+    <label for="quality">Detalhe</label><select id="quality"><option value="game">Game (instancing)</option><option value="hero">Hero (inspeção)</option></select>
+    <button id="regenerate">Regenerar</button><button id="export">Exportar GLB</button>
+    <section><p id="error" role="alert"></p><small>Sombras, materiais PBR, UV e cores por vértice. A exportação GLB utiliza o modelo visível no navegador.</small></section>
+  </aside>
+  <script type="module" src="./procedural-tree-preview.js"></script>
+</body>
+</html>
